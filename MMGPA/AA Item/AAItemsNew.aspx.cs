@@ -201,6 +201,31 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
         ClientScript.RegisterStartupScript(this.GetType(), "sweetAlertWithTextarea", sweetAlertScript, false);
     }
 
+    //sweet alert - html warning (no redirect)
+    private void getSweetHTMLWzrning(string titles, string mssg)
+    {
+        string title = titles;
+        string message = mssg;
+        string icon = "warning";
+        string confirmButtonText = "OK";
+        string allowOutsideClick = "false"; // Prevent closing on outside click
+
+        // Create a placeholder textarea for user input
+        string sweetAlertScript = $@"
+            <script>
+                Swal.fire({{
+                    title: '{title}',
+                    html: '{message}',
+                    icon: '{icon}',
+                    confirmButtonText: '{confirmButtonText}',
+                    allowOutsideClick: {allowOutsideClick}
+                }})
+            </script>";
+
+        // Register the script
+        ClientScript.RegisterStartupScript(this.GetType(), "sweetAlertWithTextarea", sweetAlertScript, false);
+    }
+
 
 
 
@@ -486,7 +511,7 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
     {
         // the file has to be there, at the source
 
-        string filename = "~/Portal/Reference/AAItems.xlsx"; // excel file
+        string filename = "~/Portal/Reference/AA_BOM.xlsx"; // excel file
         //string filename = "~/Portal/Samples/Milind Khamkar Infosys Offer Letter.pdf"; // pdf file
 
         if (filename != "")
@@ -514,76 +539,96 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
     protected void btnDocUpload_Click(object sender, EventArgs e)
     {
-        if (fileExcel.HasFile)
+        try
         {
-            string FileExtension = System.IO.Path.GetExtension(fileExcel.FileName);
-
-            if (FileExtension == ".xlsx" || FileExtension == ".xls")
+            if (fileExcel.HasFile)
             {
-                string strFileName = DateTime.Now.Day.ToString() + '_' + DateTime.Now.Month.ToString() + '_' + DateTime.Now.Year.ToString() + '_' + DateTime.Now.Hour.ToString() + '_' +
-                                     DateTime.Now.Minute.ToString() + '_' + fileExcel.FileName.ToString();
+                string FileExtension = System.IO.Path.GetExtension(fileExcel.FileName);
 
-                string filePath = Server.MapPath("~/Portal/Public/" + strFileName);
-                fileExcel.SaveAs(filePath);
-
-                try
+                if (FileExtension == ".xlsx" || FileExtension == ".xls")
                 {
+                    string strFileName = DateTime.Now.Day.ToString() + '_' + DateTime.Now.Month.ToString() + '_' + DateTime.Now.Year.ToString() + '_' + DateTime.Now.Hour.ToString() + '_' +
+                                         DateTime.Now.Minute.ToString() + '_' + fileExcel.FileName.ToString();
+
+                    string filePath = Server.MapPath("~/Portal/Public/" + strFileName);
+                    fileExcel.SaveAs(filePath);
+
                     using (ExcelPackage package = new ExcelPackage(new FileInfo(filePath)))
                     {
                         // Licence for Non-Commercial applications
                         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-
                         // Assuming the data is in the first worksheet
-                        ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
+                        //ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
 
-                        // Access data from the worksheet
-                        int rowCount = worksheet.Dimension.Rows;
-                        int colCount = worksheet.Dimension.Columns;
+                        ExcelWorksheet worksheet = null;
 
-                        DataTable dt = new DataTable();
+                        string sheetName = SheetName.Text.Trim();
 
-                        // Assuming the first row contains column headers
-                        for (int col = 1; col <= colCount; col++)
+                        if (!string.IsNullOrEmpty(sheetName))
                         {
-                            dt.Columns.Add(worksheet.Cells[1, col].Text);
+                            worksheet = package.Workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == sheetName);
                         }
 
-                        // Starting from the second row to skip headers
-                        for (int row = 2; row <= rowCount; row++)
+                        if (worksheet != null)
                         {
-                            DataRow dataRow = dt.NewRow();
+                            // Access data from the worksheet
+                            int rowCount = worksheet.Dimension.Rows;
+                            int colCount = worksheet.Dimension.Columns;
 
+                            DataTable dt = new DataTable();
+
+                            // Assuming the first row contains column headers
                             for (int col = 1; col <= colCount; col++)
                             {
-                                dataRow[col - 1] = worksheet.Cells[row, col].Text;
+                                dt.Columns.Add(worksheet.Cells[1, col].Text);
                             }
 
-                            dt.Rows.Add(dataRow);
-                        }
-
-                        if (dt.Rows.Count > 0)
-                        {
-                            // Checking column names present in excel sheet or not
-                            if (dt.Columns[0].ColumnName.Trim() == "ItemCategory" && dt.Columns[1].ColumnName.Trim() == "ItemSubCategory" &&
-                            dt.Columns[2].ColumnName.Trim() == "ItemName" && dt.Columns[3].ColumnName.Trim() == "ItemCode")
+                            // Starting from the second row to skip headers
+                            for (int row = 2; row <= rowCount; row++)
                             {
+                                DataRow dataRow = dt.NewRow();
 
-                                // Method 1: delete data from Temp Table
-                                // Method 2: inserting data into temp table if needed
+                                for (int col = 1; col <= colCount; col++)
+                                {
+                                    dataRow[col - 1] = worksheet.Cells[row, col].Text;
+                                }
 
-                                InsertAAItemsToGrid(dt);
-
-                                // Method 3: To display the inserted data from Temp or Main Table
+                                dt.Rows.Add(dataRow);
                             }
+
+                            if (dt.Rows.Count > 0)
+                            {
+                                // Checking column names present in excel sheet or not
+                                if (dt.Columns[0].ColumnName.Trim() == "ItemCategory" && dt.Columns[1].ColumnName.Trim() == "ItemSubCategory" &&
+                                dt.Columns[2].ColumnName.Trim() == "ItemName" && dt.Columns[3].ColumnName.Trim() == "ItemCode" && dt.Columns[4].ColumnName.Trim() == "ItemQuantity"
+                                && dt.Columns[5].ColumnName.Trim() == "ItemUOM" && dt.Columns[6].ColumnName.Trim() == "ItemRate" && dt.Columns[7].ColumnName.Trim() == "ItemDescription")
+                                {
+
+                                    // Method 1: delete data from Temp Table
+                                    // Method 2: inserting data into temp table if needed
+
+                                    InsertAAItemsToGrid(dt);
+
+                                    // Method 3: To display the inserted data from Temp or Main Table
+                                }
+                                else
+                                {
+                                    getSweetHTMLWzrning("Wrong Excel Columns!", "The Excel Format Has Not Matched, <br/> Please Download The Correct Excel File Format");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            getSweetHTMLWzrning("Invalid Worksheet Name!", "The specified worksheet name was not found in the excel file. <br/> Please check the excel file properly.");
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-
-                }
             }
+        }
+        catch (Exception ex)
+        {
+            getSweetHTMLWzrning("Ops!", ex.Message);
         }
     }
 
@@ -773,40 +818,59 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
     protected void btnSubmit_Click(object sender, EventArgs e)
     {
-        if (itemGrid.Rows.Count > 0)
+        bool someChecked = false;
+
+        foreach (GridViewRow row in itemGrid.Rows)
         {
-            using (SqlConnection con = new SqlConnection(connectionString))
+            bool checkStatus = ((CheckBox)row.FindControl("CheckStatus")).Checked;
+
+            if (checkStatus)
             {
-                con.Open();
-                SqlTransaction transaction = con.BeginTransaction();
+                someChecked = true;
+            }
+        }
 
-                try
+        if (someChecked)
+        {
+            if (itemGrid.Rows.Count > 0)
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
                 {
-                    string adminApproveRefNo = AdminApproveNo.SelectedValue;
+                    con.Open();
+                    SqlTransaction transaction = con.BeginTransaction();
 
-                    // inserting header
-                    InsertAAItems(con, transaction);
+                    try
+                    {
+                        string adminApproveRefNo = AdminApproveNo.SelectedValue;
 
-                    if (transaction.Connection != null) transaction.Commit();
+                        // inserting header
+                        InsertAAItems(con, transaction);
 
-                    string adminapprovalNo = AdminApproveNo.SelectedItem.Text;
-                    getSweetAlertSuccessRedirectMandatory("Item Uploaded Successfully!", $"The Following Items Successfully Uploaded For Administrative Approval: {adminapprovalNo}", "AAItems.aspx");
+                        if (transaction.Connection != null) transaction.Commit();
+
+                        string adminapprovalNo = AdminApproveNo.SelectedItem.Text;
+                        getSweetAlertSuccessRedirectMandatory("Item Uploaded Successfully!", $"The Following Items Successfully Uploaded For Administrative Approval: {adminapprovalNo}", "AAItems.aspx");
+                    }
+                    catch (Exception ex)
+                    {
+                        getSweetAlertErrorMandatory("Oops!", $"{ex.Message}");
+                        transaction.Rollback();
+                    }
+                    finally
+                    {
+                        con.Close();
+                        transaction.Dispose();
+                    }
                 }
-                catch (Exception ex)
-                {
-                    getSweetAlertErrorMandatory("Oops!", $"{ex.Message}");
-                    transaction.Rollback();
-                }
-                finally
-                {
-                    con.Close();
-                    transaction.Dispose();
-                }
+            }
+            else
+            {
+                getSweetAlertErrorMandatory("No Items Found!", "Kindly Add / Upload Some Items To Proceed Further");
             }
         }
         else
         {
-            getSweetAlertErrorMandatory("No Items Found!", "Kindly Add / Upload Some Items To Proceed Further");
+            getSweetHTMLWzrning("No Items Are Checked", "Kindly Check Minimum 1 Item To Proceed Further");
         }
     }
 

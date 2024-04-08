@@ -326,14 +326,14 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
             AAForItemCategory.DataTextField = "CategoryName";
             AAForItemCategory.DataValueField = "RefID";
             AAForItemCategory.DataBind();
-            AAForItemCategory.Items.Insert(0, new ListItem("------Select Item Category------", "0"));
+            //AAForItemCategory.Items.Insert(0, new ListItem("------Select Item Category------", "0"));
 
-            ListItem selectValuesItem = AAForItemCategory.Items.FindByValue("0");
+            //ListItem selectValuesItem = AAForItemCategory.Items.FindByValue("0");
 
-            if (selectValuesItem != null)
-            {
-                selectValuesItem.Selected = true;
-            }
+            //if (selectValuesItem != null)
+            //{
+            //    selectValuesItem.Selected = true;
+            //}
         }
     }
 
@@ -578,7 +578,8 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
 
 
         // combining selected category refIDs into comma seperated string
-        AAForItemCategory.Items[0].Selected = false;
+
+        //AAForItemCategory.Items[0].Selected = false;
 
         List<string> itemCategorylist = new List<string>();
         

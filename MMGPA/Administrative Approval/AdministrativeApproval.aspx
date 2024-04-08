@@ -70,7 +70,7 @@
                 </div>
 
                 <!-- Control UI Starts -->
-                <div class="card mt-2 shadow-sm">
+                <div class="card mt-2 shadow">
                     <div class="card-body">
 
 
@@ -188,7 +188,7 @@
             </div>
 
             <!-- Update Header UI Starts -->
-            <div class="card col-md-12 mx-auto mt-2 py-2 shadow-sm rounded-3">
+            <div class="card col-md-12 mx-auto mt-2 py-2 shadow rounded-3">
                 <div class="card-body">
 
                     <!-- Heading -->

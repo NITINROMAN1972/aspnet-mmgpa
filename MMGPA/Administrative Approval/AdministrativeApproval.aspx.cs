@@ -305,14 +305,14 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
             AAForItemCategory.DataTextField = "CategoryName";
             AAForItemCategory.DataValueField = "RefID";
             AAForItemCategory.DataBind();
-            AAForItemCategory.Items.Insert(0, new ListItem("------Select Item Category------", "0"));
+            //AAForItemCategory.Items.Insert(0, new ListItem("------Select Item Category------", "0"));
 
-            ListItem selectValuesItem = AAForItemCategory.Items.FindByValue("0");
+            //ListItem selectValuesItem = AAForItemCategory.Items.FindByValue("0");
 
-            if (selectValuesItem != null)
-            {
-                selectValuesItem.Selected = true;
-            }
+            //if (selectValuesItem != null)
+            //{
+            //    selectValuesItem.Selected = true;
+            //}
         }
     }
 
@@ -437,7 +437,7 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
         {
             connection.Open();
 
-            string sql = $@"select aa.RefNo , aa.AANumber, aa.AADate, aa.AATitle, aa.AAFor, aa.SanctionAmount, aa.SanctionDate, aa.SourceOfBudget, budget.BudgetName, 
+            string sql = $@"select aa.RefNo , aa.AANumber, aa.AADate, aa.AATitle, aa.AAFor, Concat(N'₹ ', Format(aa.SanctionAmount, 'N', 'en-IN')) as SanctionAmount, aa.SanctionDate, aa.SourceOfBudget, budget.BudgetName, 
                             LEN(aa.AAFor) - LEN(REPLACE(aa.AAFor, ',', '')) + 1 AS NumberOfItems, 
                             case when (select count (*) from AAVerification757 as verify where verify.AARefNo = aa.RefNo) > 0 then 'Verified' else 'Pending' end as VerificationStatus
                             from AAMaster757 as aa 
@@ -606,7 +606,6 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
             // clearing existing selections
             SourceOfBudget.ClearSelection();
 
-            // source of budget DD refid
             string sourceOfBudgetRefID = dt.Rows[0]["budgetRefId"].ToString();
 
             foreach (ListItem item in SourceOfBudget.Items)
@@ -615,6 +614,27 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
                 {
                     item.Selected = true;
                     break;
+                }
+            }
+
+
+
+
+
+            // checking only saved DD lists in multi-checkbox
+
+            AAForItemCategory.ClearSelection();
+
+            string savedValues = dt.Rows[0]["AAFor"].ToString();
+            string[] savedItems = savedValues.Split(',');
+
+            foreach (string value in savedItems)
+            {
+                ListItem item = AAForItemCategory.Items.FindByValue(value);
+
+                if (item != null)
+                {
+                    item.Selected = true;
                 }
             }
         }
@@ -931,7 +951,8 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
 
 
         // combining selected category refIDs into comma seperated string
-        AAForItemCategory.Items[0].Selected = false;
+
+        //AAForItemCategory.Items[0].Selected = false;
 
         List<string> itemCategorylist = new List<string>();
 

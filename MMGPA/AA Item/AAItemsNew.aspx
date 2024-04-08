@@ -45,7 +45,7 @@
 
 </head>
 <body>
-    <form id="form1" runat="server" class="bg-light">
+    <form id="form1" runat="server">
 
 
         <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true"></asp:ScriptManager>
@@ -54,11 +54,11 @@
 
             <!-- Heading -->
             <div class="col-md-12 mx-auto fw-normal fs-3 fw-medium ps-0 pb-2 text-dark-emphasis mt-1 mb-1">
-                <asp:Literal Text="A.A. Items Upload" runat="server"></asp:Literal>
+                <asp:Literal Text="Upload A.A. BOM" runat="server"></asp:Literal>
             </div>
 
             <!-- Header UI Starts -->
-            <div class="card col-md-12 mx-auto mt-1 py-2 shadow-sm rounded-3">
+            <div class="card col-md-12 mx-auto mt-1 py-2 shadow rounded-3">
                 <div class="card-body">
 
 
@@ -90,7 +90,7 @@
             <!-- Header UI Ends -->
 
             <!-- Details UI Starts -->
-            <div class="card col-md-12 mx-auto mt-5 rounded-3 shadow-sm">
+            <div class="card col-md-12 mx-auto mt-5 rounded-3 shadow">
                 <div class="card-body">
 
                     <asp:UpdatePanel ID="UpdatePanel1" runat="server" UpdateMode="Conditional">
@@ -260,7 +260,7 @@
                                 <!-- Heading 2 Excel -->
                                 <div class="border-top border-bottom border-secondary-subtle py-2 mt-4">
                                     <div class="fw-normal fs-5 fw-medium text-body-secondary">
-                                        <asp:Literal Text="Upload A.A. Items Excel" runat="server"></asp:Literal>
+                                        <asp:Literal Text="Upload A.A. BOM" runat="server"></asp:Literal>
                                     </div>
                                 </div>
 
@@ -297,7 +297,7 @@
                                         </div>
                                         <div class="input-group has-validation">
                                             <h6 class="fw-semibold fs-6 text-dark-subtle align-self-end">
-                                                <asp:LinkButton ID="btnSample" OnClick="btnSample_Click" runat="server" CssClass="btn btn-success shadow">AAItems.xlsx</asp:LinkButton>
+                                                <asp:LinkButton ID="btnSample" OnClick="btnSample_Click" runat="server" CssClass="btn btn-success shadow">AA_BOM.xlsx</asp:LinkButton>
                                             </h6>
                                         </div>
                                     </div>
@@ -364,19 +364,6 @@
 
                                     </Columns>
                                 </asp:GridView>
-
-                                <%--<!-- Total Item Amount -->
-                    <div class="row px-0">
-                        <div class="col-md-8">
-                        </div>
-                        <div class="col-md-4 align-self-end text-end">
-                            <asp:Literal ID="Literal6" Text="" runat="server">Total Item Basic Amount</asp:Literal>
-                            <div class="input-group">
-                                <span class="input-group-text fs-5 fw-semibold">₹</span>
-                                <asp:TextBox runat="server" ID="TotalItemAmount" CssClass="form-control fw-lighter border border-2" ReadOnly="true" placeholder="Total Service Amount"></asp:TextBox>
-                            </div>
-                        </div>
-                    </div>--%>
                             </div>
                             <!-- Item GridView Ends -->
 

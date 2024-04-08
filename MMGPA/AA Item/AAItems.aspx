@@ -59,7 +59,7 @@
                 <div class="justify-content-end d-flex px-0 text-body-secondary mb-0 mt-4">
                     <div class="col-md-6 px-0">
                         <div class="fw-semibold fs-3 text-dark">
-                            <asp:Literal ID="Literal14" Text="A.A. Items Upload" runat="server"></asp:Literal>
+                            <asp:Literal ID="Literal14" Text="Upload A.A. BOM" runat="server"></asp:Literal>
                         </div>
                     </div>
                     <div class="col-md-6 text-end px-0">
@@ -70,7 +70,7 @@
                 </div>
 
                 <!-- Control UI Starts -->
-                <div class="card mt-2 shadow-sm">
+                <div class="card mt-2 shadow">
                     <div class="card-body">
 
 
@@ -180,11 +180,11 @@
 
             <!-- Heading -->
             <div class="col-md-12 mx-auto fw-normal fs-3 fw-medium ps-0 pb-2 text-dark-emphasis mt-1 mb-1">
-                <asp:Literal Text="A.A. Items Update" runat="server"></asp:Literal>
+                <asp:Literal Text="Upload A.A. BOM" runat="server"></asp:Literal>
             </div>
 
             <!-- Header UI Starts -->
-            <div class="card col-md-12 mx-auto mt-1 py-2 shadow-sm rounded-3">
+            <div class="card col-md-12 mx-auto mt-1 py-2 shadow rounded-3">
                 <div class="card-body">
 
 
@@ -219,7 +219,7 @@
 
 
             <!-- Details UI Starts -->
-            <div class="card col-md-12 mx-auto mt-5 rounded-3 shadow-sm">
+            <div class="card col-md-12 mx-auto mt-5 rounded-3 shadow">
                 <div class="card-body">
 
                     <asp:UpdatePanel ID="UpdatePanel1" runat="server" UpdateMode="Conditional">

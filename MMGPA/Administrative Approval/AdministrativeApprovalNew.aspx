@@ -57,7 +57,7 @@
             </div>
 
             <!-- Header UI Starts -->
-            <div class="card col-md-12 mx-auto mt-1 py-2 shadow-sm rounded-3">
+            <div class="card col-md-12 mx-auto mt-1 py-2 shadow rounded-3">
                 <div class="card-body">
 
                     <!-- Heading -->
