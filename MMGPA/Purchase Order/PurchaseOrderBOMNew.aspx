@@ -102,8 +102,6 @@
                                 <asp:Literal Text="Item Details" runat="server"></asp:Literal>
                             </div>
 
-
-
                             <!-- Mode Of Entry Starts - Radio Buttons -->
                             <div class="">
                                 <h6>Mode Of Entry <em style="color: red">*</em></h6>
