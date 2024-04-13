@@ -19,7 +19,7 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
         // Project: MMGPA
         // Code: 757
 
-        //Session["UserId"] = "10223"; // client - milind
+        Session["UserId"] = "10223"; // client - milind
 
         if (Session["UserId"] != null)
         {

@@ -18,7 +18,21 @@ $(document).ready(function () {
     });
 
     // approval status
-    $('#ApprovalStatus').select2({
+    $('#VerificationStatus').select2({
+        theme: 'classic',
+        placeholder: 'Select here.....',
+        allowClear: false,
+    });
+
+    // source of budget
+    $('#SourceOfBudget').select2({
+        theme: 'classic',
+        placeholder: 'Select here.....',
+        allowClear: false,
+    });
+
+    // bureau
+    $('#Bureau').select2({
         theme: 'classic',
         placeholder: 'Select here.....',
         allowClear: false,
@@ -89,7 +103,7 @@ $(document).ready(function () {
             });
 
             // approval status
-            $('#ApprovalStatus').select2({
+            $('#VerificationStatus').select2({
                 theme: 'classic',
                 placeholder: 'Select here.....',
                 allowClear: false,

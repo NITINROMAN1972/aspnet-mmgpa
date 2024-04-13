@@ -59,12 +59,12 @@
                 <div class="justify-content-end d-flex px-0 text-body-secondary mb-0 mt-4">
                     <div class="col-md-6 px-0">
                         <div class="fw-semibold fs-3 text-dark">
-                            <asp:Literal ID="Literal14" Text="Tendor Estimation" runat="server"></asp:Literal>
+                            <asp:Literal ID="Literal14" Text="Estimation Estimation" runat="server"></asp:Literal>
                         </div>
                     </div>
                     <div class="col-md-6 text-end px-0">
                         <div class="fw-semibold fs-5">
-                            <asp:Button ID="btnNewBill" runat="server" Text="New Upload +" OnClick="btnNewBill_Click" CssClass="btn btn-custom text-white shadow" />
+                            <asp:Button ID="btnNewBill" runat="server" Text="New Estimate +" OnClick="btnNewBill_Click" CssClass="btn btn-custom text-white shadow" />
                         </div>
                     </div>
                 </div>
@@ -84,7 +84,7 @@
                                     <!-- Search DD - Estimate No -->
                                     <div class="col-md-4 align-self-end">
                                         <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                            <asp:Literal ID="Literal15" Text="" runat="server">Tendor Estimate</asp:Literal>
+                                            <asp:Literal ID="Literal15" Text="" runat="server">Tender Estimate</asp:Literal>
                                         </div>
                                         <asp:DropDownList ID="ddScEstimateNo" runat="server" AutoPostBack="false" class="form-control is-invalid" CssClass=""></asp:DropDownList>
                                     </div>
@@ -177,7 +177,7 @@
 
             <!-- Heading -->
             <div class="col-md-12 mx-auto fw-normal fs-3 fw-medium ps-0 pb-2 text-dark-emphasis mt-1 mb-1">
-                <asp:Literal Text="Tendor Estimation" runat="server"></asp:Literal>
+                <asp:Literal Text="Estimation Estimation" runat="server"></asp:Literal>
             </div>
 
             <!-- Header UI Starts -->
@@ -187,7 +187,7 @@
 
                     <!-- Heading 1 -->
                     <div class="fw-normal fs-5 fw-medium text-body-secondary border-bottom pb-2 mb-4">
-                        <asp:Literal Text="Tendor Details" runat="server"></asp:Literal>
+                        <asp:Literal Text="Estimation Details" runat="server"></asp:Literal>
                     </div>
 
                     <!-- 1st row Starts -->
@@ -196,7 +196,7 @@
                         <!-- Estimate No -->
                         <div class="col-md-6 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                <asp:Literal ID="Literal3" Text="" runat="server">Estimate Number No.<em style="color: red">*</em></asp:Literal>
+                                <asp:Literal ID="Literal3" Text="" runat="server">Estimate Number<em style="color: red">*</em></asp:Literal>
                             </div>
                             <asp:TextBox runat="server" ID="EstimateNo" ReadOnly="true" type="text" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
                         </div>
@@ -302,6 +302,11 @@
                                             <asp:Literal ID="Literal4" Text="" runat="server">Item Name</asp:Literal>
                                             <div>
                                                 <asp:RequiredFieldValidator ID="RequiredFieldValidator2" ControlToValidate="ItemName" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select item name" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                            </div>
+                                            <div>
+                                                <asp:CustomValidator ID="ItemExistsCV" OnServerValidate="ItemExistsCV_ServerValidate" ValidationGroup="ItemSave"
+                                                    ClientValidationFunction="checkItemExistence" Display="Dynamic" runat="server" CssClass="text-danger">
+                                                </asp:CustomValidator>
                                             </div>
                                         </div>
                                         <asp:DropDownList ID="ItemName" runat="server" AutoPostBack="false" class="form-control is-invalid" CssClass=""></asp:DropDownList>
@@ -492,7 +497,7 @@
 
                                 <hr class="border-bottom border-secondary-subtle mt-5 mb-5" />
 
-                                <asp:GridView ShowHeaderWhenEmpty="true" ID="itemGrid" runat="server" AutoGenerateColumns="false" OnRowDeleting="Grid_RowDeleting"
+                                <asp:GridView ShowHeaderWhenEmpty="true" ID="itemGrid" runat="server" AutoGenerateColumns="false"
                                     CssClass="table table-bordered  border border-1 border-dark-subtle text-center grid-custom mb-3">
                                     <HeaderStyle CssClass="align-middle" />
                                     <Columns>
@@ -509,13 +514,28 @@
                                         <asp:BoundField DataField="ItemCategoryText" HeaderText="Item Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                         <asp:BoundField DataField="ItemSubCategoryText" HeaderText="Item Sub Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                         <asp:BoundField DataField="ItemNameText" HeaderText="Item Name" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                        <asp:BoundField DataField="TendorQuantity" HeaderText="Tendor Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                        <asp:BoundField DataField="ItemName" HeaderText="Item Name" Visible="false" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                        <asp:BoundField DataField="AoTotalQty" HeaderText="AA Total Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                        <asp:BoundField DataField="AoBalanceQty" HeaderText="AA Balance Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+
+                                        <asp:TemplateField HeaderText="Tender Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="TenderQuantity" Text='<%# Bind("TenderQuantity") %>' AutoPostBack="true" OnTextChanged="ItemSubTotal_TextChanged" type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="true" CssClass="col-md-12 fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
+                                                <asp:CustomValidator ID="TenderQtyGridCV" ControlToValidate="TenderQuantity" OnServerValidate="TenderQtyGridCV_ServerValidate" ValidationGroup="finalSubmit" ErrorMessage="" runat="server" ForeColor="Red" Display="Dynamic"></asp:CustomValidator>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                         <asp:BoundField DataField="ItemUOMText" HeaderText="UOM" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                        <asp:BoundField DataField="ItemRate" HeaderText="Rate/Unit" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+
+                                        <asp:TemplateField HeaderText="Rate/Unit" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="ItemRate" Text='<%# Bind("ItemRate") %>' AutoPostBack="true" OnTextChanged="ItemSubTotal_TextChanged" type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="true" CssClass="col-md-12 fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="Item Sub Total" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
                                             <ItemTemplate>
-                                                <asp:TextBox ID="ItemSubTotal" Text='<%# Bind("ItemSubTotal") %>' onchange="updateBasicAmount(this)" type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="true" CssClass="col-md-12 fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
+                                                <asp:TextBox ID="ItemSubTotal" Text='<%# Bind("ItemSubTotal") %>' ReadOnly="true" type="number" step="0.01" title="can edit the item sub total" runat="server" CssClass="col-md-12 fw-light border border-dark-subtle bg-light shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
@@ -523,23 +543,13 @@
 
                                         <asp:TemplateField HeaderText="Add" ItemStyle-CssClass="align-middle">
                                             <HeaderTemplate>
-                                                <asp:CheckBox ID="chkSelectAll" runat="server" Text="Select All" onclick="toggleCheckBoxes(this);" CssClass="" />
+                                                <asp:CheckBox ID="chkSelectAll" OnCheckedChanged="CheckStatus_CheckedChanged" AutoPostBack="true" runat="server" Text="Select All" onclick="toggleCheckBoxes(this);" CssClass="" />
                                             </HeaderTemplate>
                                             <ItemTemplate>
-                                                <asp:CheckBox ID="CheckStatus" OnCheckedChanged="CheckStatus_CheckedChanged" runat="server" AutoPostBack="true" Checked='<%# Eval("CheckStatus") %>' CssClass="" />
+                                                <asp:CheckBox ID="CheckStatus" OnCheckedChanged="CheckStatus_CheckedChanged" AutoPostBack="true" runat="server" Checked='<%# Eval("CheckStatus") %>' CssClass="" />
                                             </ItemTemplate>
                                             <ItemStyle HorizontalAlign="Center" />
                                         </asp:TemplateField>
-
-                                        <asp:TemplateField HeaderText="Action">
-                                            <ItemTemplate>
-                                                <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete" CommandArgument='<%# Container.DataItemIndex %>'>
-                                            <asp:Image runat="server" ImageUrl="../assests/img/modern-cross-fill.svg" AlternateText="Edit" style="width: 28px; height: 28px;"/>
-                                                </asp:LinkButton>
-                                            </ItemTemplate>
-                                            <ItemStyle HorizontalAlign="Center" Width="100px" />
-                                        </asp:TemplateField>
-
                                     </Columns>
                                 </asp:GridView>
 
@@ -575,7 +585,7 @@
                                 <asp:Button ID="btnBack" runat="server" Text="Back" OnClick="btnBack_Click" CssClass="btn btn-custom text-white shadow mb-5" />
                             </div>
                             <div class="col-md-6 text-end">
-                                <asp:Button ID="btnSubmit" runat="server" Text="Submit" OnClick="btnSubmit_Click" ValidationGroup="finalSubmit" CssClass="btn btn-custom text-white shadow mb-5" />
+                                <asp:Button ID="btnSubmit" runat="server" Text="Update" OnClick="btnSubmit_Click" ValidationGroup="finalSubmit" CssClass="btn btn-custom text-white shadow mb-5" />
                             </div>
                         </div>
                     </div>
@@ -608,7 +618,6 @@
                 document.getElementById('<%= ItemSubTotalTxt.ClientID %>').value = itemSubTotal; //itemSubTotal.toFixed(2); to roundup to 2 decimalsmals
             }
 
-            // check all checkboxes and update total amount with present item sub total amounts
             function toggleCheckBoxes(chkAll) {
                 var gridView = document.getElementById('<%= itemGrid.ClientID %>');
                 var checkBoxes = gridView.getElementsByTagName('input');
@@ -618,15 +627,17 @@
                     if (checkBoxes[i].type == 'checkbox') {
                         checkBoxes[i].checked = chkAll.checked;
 
-                        // calculating thw total item amount if checkbox is checked
+                        // Calculate the total item sub total if checkbox is checked
                         if (checkBoxes[i].checked) {
-                            var textBox = checkBoxes[i].closest('tr').querySelector('input[type="number"]');
+                            var row = checkBoxes[i].closest('tr');
+                            var textBox = row.querySelector('input[id$="ItemSubTotal"]');
                             if (textBox) {
                                 basicAmount += parseFloat(textBox.value);
                             }
                         }
                     }
                 }
+
                 document.getElementById('<%= BasicAmount.ClientID %>').value = basicAmount.toFixed(2);
             }
 

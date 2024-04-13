@@ -142,6 +142,7 @@
                                     <asp:BoundField DataField="SanctionDate" HeaderText="Sanctioned Date" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" DataFormatString="{0:dd/MM/yyyy}" />
                                     <asp:BoundField DataField="BudgetName" HeaderText="Source Of Budget" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
                                     <asp:BoundField DataField="AAItemCount" HeaderText="A.A. Items Count" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
+                                    <asp:BoundField DataField="Bureau" HeaderText="Bureau" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
                                     <asp:BoundField DataField="verifyStatus" HeaderText="Verification Status" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
 
                                     <asp:TemplateField HeaderText="Update" ItemStyle-CssClass="align-middle">
@@ -179,12 +180,12 @@
                 <asp:Literal Text="A.A. Verification" runat="server"></asp:Literal>
             </div>
 
-            <!-- Header UI Starts -->
+            <!-- AA Header UI Starts -->
             <div class="card col-md-12 mx-auto mt-1 py-2 shadow rounded-3">
                 <div class="card-body">
 
 
-                    <!-- Heading 1 -->
+                    <!-- Heading 2 -->
                     <div class="fw-normal fs-5 fw-medium text-body-secondary border-bottom pb-2 mb-4">
                         <asp:Literal Text="A.A. Details" runat="server"></asp:Literal>
                     </div>
@@ -195,16 +196,68 @@
                         <!-- AA No & Title -->
                         <div class="col-md-6 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                <asp:Literal ID="Literal3" Text="" runat="server">A.A. Number & Title <em style="color: red">*</em></asp:Literal>
+                                <asp:Literal ID="Literal2" Text="" runat="server">A.A. Number & Title</asp:Literal>
                                 <div>
-                                    <asp:RequiredFieldValidator ID="rr1" ControlToValidate="AdminApproveNo" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select administrative approval number and title" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator3" ControlToValidate="AdminApproveNo" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select administrative approval number and title" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                 </div>
                             </div>
                             <asp:DropDownList ID="AdminApproveNo" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
                         </div>
 
+                        <!-- AA Date -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal12" Text="" runat="server">A.A. Date</asp:Literal>
+                            </div>
+                            <asp:TextBox runat="server" ID="AADate" type="date" ReadOnly="true" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
                     </div>
                     <!-- 1st row Ends -->
+
+                    <!-- 2nd row Starts -->
+                    <div class="row mb-2">
+
+                        <!-- Sanction Amount -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal5" Text="" runat="server">Sanction Amount</asp:Literal>
+                            </div>
+                            <asp:TextBox runat="server" ID="SanctionAmount" type="text" ReadOnly="true" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
+                        <!-- Sanction Date -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal4" Text="" runat="server">Sanction Date</asp:Literal>
+                            </div>
+                            <asp:TextBox runat="server" ID="SanctionDate" type="date" ReadOnly="true" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
+                    </div>
+                    <!-- 2nd row Ends -->
+
+                    <!-- 3rd row Starts -->
+                    <div class="row mb-2">
+
+                        <!-- Source Of Budget -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal3" Text="" runat="server">Source Of Budget</asp:Literal>
+                            </div>
+                            <asp:DropDownList ID="SourceOfBudget" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                        </div>
+
+                        <!-- Bureau -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal6" Text="" runat="server">Bureau</asp:Literal>
+                            </div>
+                            <asp:DropDownList ID="Bureau" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                        </div>
+
+                    </div>
+                    <!-- 3rd row Ends -->
 
 
                 </div>
@@ -246,7 +299,7 @@
                                 <asp:BoundField DataField="ItemCode" HeaderText="Item Code" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemQuantity" HeaderText="Item Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemUOMText" HeaderText="UOM" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                <asp:BoundField DataField="ItemRate" HeaderText="Rate/Unit" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                <asp:BoundField DataField="ItemRate" HeaderText="Rate" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemSubTotal" HeaderText="Item Sub Total" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemDescription" HeaderText="Description" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                             </Columns>
@@ -259,34 +312,26 @@
                     <div class="row mb-2">
 
                         <!-- AA No & Title -->
-                        <div class="col-md-6 align-self-end">
+                        <div class="col-md-6 align-self-start">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                <asp:Literal ID="Literal1" Text="" runat="server">Approval Status <em style="color: red">*</em></asp:Literal>
+                                <asp:Literal ID="Literal1" Text="" runat="server">Verification Status <em style="color: red">*</em></asp:Literal>
                                 <div>
-                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" ControlToValidate="ApprovalStatus" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select approval status" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" ControlToValidate="VerificationStatus" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select verification status" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                 </div>
                             </div>
-                            <asp:DropDownList ID="ApprovalStatus" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass="">
-                                <asp:ListItem Text="Approved" Value="TRUE"></asp:ListItem>
-                                <asp:ListItem Text="Not Approved" Value="FALSE"></asp:ListItem>
-                            </asp:DropDownList>
+                            <asp:DropDownList ID="VerificationStatus" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                        </div>
+
+                        <!-- Verification Remark -->
+                        <div class="col-md-6 px-0 align-self-start">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal8" Text="" runat="server">Verification Remark</asp:Literal>
+                            </div>
+                            <textarea id="VerificationRemark" rows="2" cols="50" class="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1" runat="server"></textarea>
                         </div>
 
                     </div>
                     <!-- 1st row Ends -->
-
-
-                    <!-- Verification Remark -->
-                    <div class="col-md-12 mt-3 px-0 align-self-start">
-                        <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                            <asp:Literal ID="Literal8" Text="" runat="server">Verification Remark</asp:Literal>
-                            <div>
-                                <asp:RequiredFieldValidator ID="RequiredFieldValidator2" ControlToValidate="VerificationRemark" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="kindlly enter verification remark" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
-                            </div>
-                        </div>
-                        <textarea id="VerificationRemark" rows="3" cols="50" class="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1" runat="server"></textarea>
-                    </div>
-
 
 
                     <!-- Submit Button UI Starts -->

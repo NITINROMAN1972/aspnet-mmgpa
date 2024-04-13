@@ -29,6 +29,7 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
                 AdministrativeAprovalNo_Bind_Dropdown();
 
                 AANoAndTitle_DropDown();
+                Verification_DropDown();
             }
         }
         else
@@ -263,6 +264,31 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
         }
     }
 
+    private void Verification_DropDown()
+    {
+        string userID = Session["UserId"].ToString();
+
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = "select * from VerificationStatus757";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            //cmd.Parameters.AddWithValue("@SaveBy", userID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            VerificationStatus.DataSource = dt;
+            VerificationStatus.DataTextField = "VerificationText";
+            VerificationStatus.DataValueField = "VerificationValue";
+            VerificationStatus.DataBind();
+            VerificationStatus.Items.Insert(0, new ListItem("------Select Verification Status------", "0"));
+        }
+    }
+
 
 
     //=========================={ Fetch Data }==========================
@@ -370,12 +396,13 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
 
             string sql = $@"select Distinct aa.RefNo , aa.AANumber, aa.AADate, aa.AATitle, aa.SanctionAmount, aa.SanctionDate, budget.BudgetName, 
                             (select count(*) from AAItem757 as item where item.AARefNo = aa.RefNo AND item.DeleteFlag IS NULL) as AAItemCount, 
-                            case when (verify.VerificationStatus = 'TRUE') then 'Approved' else 'Pending' end as verifyStatus 
+                            case when (verify.VerificationStatus = 'TRUE') then 'Approved' else 'Pending' end as verifyStatus, b.Bureau 
                             from AAMaster757 as aa 
                             inner join AAItem757 as item on item.AARefNo = aa.RefNo 
                             left join SourceOfBudget757 budget on budget.refid = aa.SourceOfBudget 
                             left join ItemCategory757 as ic on ic.RefId = aa.AAFor 
                             left join AAVerification757 as verify on verify.AARefNo = aa.RefNo 
+                            left join Buro757 as b on b.BuroID = aa.AABureau 
                             WHERE 1=1";
 
             if (!string.IsNullOrEmpty(aaRefNo))
@@ -473,12 +500,6 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
             ad.Fill(dt);
             con.Close();
 
-            //ApprovalStatus.DataSource = dt;
-            //ApprovalStatus.DataTextField = "AAnoTitle";
-            //ApprovalStatus.DataValueField = "VerificationStatus";
-            //ApprovalStatus.DataBind();
-            ApprovalStatus.Items.Insert(0, new ListItem("------Select Approval Status------", "0"));
-
             if (dt.Rows.Count > 0)
             {
                 Session["ExistingVerification"] = dt;
@@ -486,11 +507,11 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
                 VerificationRemark.Value = dt.Rows[0]["VerificationRemark"].ToString();
 
                 // clearing existing selections
-                ApprovalStatus.ClearSelection();
+                VerificationStatus.ClearSelection();
 
                 string verifyStatus = dt.Rows[0]["VerificationStatus"].ToString();
 
-                foreach (ListItem item in ApprovalStatus.Items)
+                foreach (ListItem item in VerificationStatus.Items)
                 {
                     if (item.Value == verifyStatus)
                     {
@@ -523,7 +544,13 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
         using (SqlConnection con = new SqlConnection(connectionString))
         {
             con.Open();
-            string sql = "select RefNo, AANumber, AATitle, CONCAT(AANumber, '  -  ', AATitle) AS AAnoTitle from AAMaster757 where RefNo = @RefNo";
+            string sql = $@"select am.RefNo, am.AANumber, am.AATitle, CONCAT(am.AANumber, '  -  ', am.AATitle) AS AAnoTitle, am.AADate, 
+                            Concat(N'₹ ',Format(am.SanctionAmount, 'N', 'en-IN')) as SanctionAmount, SanctionDate, 
+                            sb.BudgetName, b.Bureau
+                            from AAMaster757 as am 
+                            inner join SourceOfBudget757 as sb on sb.RefID = am.SourceOfBudget 
+                            left join Buro757 as b on b.BuroID = am.AABureau
+                            where RefNo = @RefNo";
             SqlCommand cmd = new SqlCommand(sql, con);
             cmd.Parameters.AddWithValue("@RefNo", aaRefNo);
             cmd.ExecuteNonQuery();
@@ -533,13 +560,41 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
             ad.Fill(dt);
             con.Close();
 
-            AdminApproveNo.DataSource = dt;
-            AdminApproveNo.DataTextField = "AAnoTitle";
-            AdminApproveNo.DataValueField = "RefNo";
-            AdminApproveNo.DataBind();
-            AdminApproveNo.Items.Insert(0, new ListItem("------Select A.A. Number & A.A. Title------", "0"));
+            if(dt.Rows.Count > 0)
+            {
+                DateTime aaDate = DateTime.Parse(dt.Rows[0]["AADate"].ToString());
+                AADate.Text = aaDate.ToString("yyyy-MM-dd");
 
-            if (AdminApproveNo.SelectedIndex < 2) AdminApproveNo.SelectedIndex = 1;
+                DateTime sanctionDate = DateTime.Parse(dt.Rows[0]["SanctionDate"].ToString());
+                SanctionDate.Text = sanctionDate.ToString("yyyy-MM-dd");
+
+                SanctionAmount.Text = dt.Rows[0]["SanctionAmount"].ToString();
+
+
+                AdminApproveNo.DataSource = dt;
+                AdminApproveNo.DataTextField = "AAnoTitle";
+                AdminApproveNo.DataValueField = "RefNo";
+                AdminApproveNo.DataBind();
+                AdminApproveNo.Items.Insert(0, new ListItem("------Select A.A. Number & A.A. Title------", "0"));
+
+                if (AdminApproveNo.SelectedIndex < 2) AdminApproveNo.SelectedIndex = 1;
+
+                SourceOfBudget.DataSource = dt;
+                SourceOfBudget.DataTextField = "BudgetName";
+                SourceOfBudget.DataValueField = "BudgetName";
+                SourceOfBudget.DataBind();
+                SourceOfBudget.Items.Insert(0, new ListItem("------Select Source Of Budget------", "0"));
+
+                if (SourceOfBudget.SelectedIndex < 2) SourceOfBudget.SelectedIndex = 1;
+
+                Bureau.DataSource = dt;
+                Bureau.DataTextField = "Bureau";
+                Bureau.DataValueField = "Bureau";
+                Bureau.DataBind();
+                Bureau.Items.Insert(0, new ListItem("------Select Bureau------", "0"));
+
+                if (Bureau.SelectedIndex < 2) Bureau.SelectedIndex = 1;
+            }
         }
     }
 
@@ -605,8 +660,8 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
                 {
                     DataTable exisintingVerificationDT = (DataTable)Session["ExistingVerification"];
 
-                    string approveStatus = ApprovalStatus.SelectedValue;
-                    if (approveStatus == "TRUE")
+                    string verificationStatus = VerificationStatus.SelectedValue;
+                    if (verificationStatus == "TRUE")
                     {
                         // updating aa items approval status
                         UpdatingAAItemsApprovalStatus(con, transaction);
@@ -654,7 +709,7 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
         {
             // administrative approval (DD) ref no
             string adminApproveRefNo = AdminApproveNo.SelectedValue;
-            string approveStatus = ApprovalStatus.SelectedValue;
+            string verificationStatus = VerificationStatus.SelectedValue;
 
 
             foreach (DataRow row in dt.Rows)
@@ -664,7 +719,7 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
                 string sql = $@"Update AAItem757 set IsVerified = @IsVerified Where RefNo = @RefNo";
 
                 SqlCommand cmd = new SqlCommand(sql, con, transaction);
-                cmd.Parameters.AddWithValue("@IsVerified", approveStatus);
+                cmd.Parameters.AddWithValue("@IsVerified", verificationStatus);
                 cmd.Parameters.AddWithValue("@RefNo", row["RefNo"]);
                 cmd.ExecuteNonQuery();
 
@@ -682,7 +737,7 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
         string refNo = exisintingVerificationDT.Rows[0]["RefNo"].ToString();
 
         string verifyRemark = VerificationRemark.Value;
-        string verifyStatus = ApprovalStatus.SelectedValue;
+        string verifyStatus = VerificationStatus.SelectedValue;
 
         string sql = $@"UPDATE AAVerification757 SET VerificationRemark=@VerificationRemark, VerificationStatus=@VerificationStatus 
                         Where RefNo=@RefNo";
@@ -711,7 +766,7 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
 
         string aaRefNo = Session["AdminApproveRefNo"].ToString();
         string verifyRemark = VerificationRemark.Value;
-        string verifyStatus = ApprovalStatus.SelectedValue;
+        string verifyStatus = VerificationStatus.SelectedValue;
 
         string sql = $@"INSERT INTO AAVerification757 
                         (RefNo, AARefNo, VerificationRemark, VerificationStatus, SaveBy) 
@@ -730,7 +785,7 @@ public partial class AA_Approval_AAVerification : System.Web.UI.Page
         //DataTable dt = new DataTable();
         //ad.Fill(dt);
 
-        if (k > 0 && ApprovalStatus.SelectedValue == "TRUE")
+        if (k > 0 && VerificationStatus.SelectedValue == "TRUE")
         {
             getSweetAlertSuccessRedirectMandatory("A.A. Verification Done!", $"The Following Items Have Been Approved", "AAVerification.aspx");
         }

@@ -357,6 +357,78 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
 
     //=========================={ Drop Down Event }==========================
+
+    protected void AdminApproveNo_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string aaRefNo = AdminApproveNo.SelectedValue;
+
+        if (AdminApproveNo.SelectedValue != "0")
+        {
+            FillAADetails(aaRefNo);
+        }
+        else
+        {
+            AADate.Text = string.Empty;
+            SanctionAmount.Text = string.Empty;
+            SanctionDate.Text = string.Empty;
+
+            SourceOfBudget.ClearSelection();
+            Bureau.ClearSelection();
+        }
+    }
+
+    private void FillAADetails(string aaRefNo)
+    {
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = $@"select am.RefNo, am.AANumber, am.AATitle, CONCAT(am.AANumber, '  -  ', am.AATitle) AS AAnoTitle, am.AADate, 
+                            Concat(N'₹ ',Format(am.SanctionAmount, 'N', 'en-IN')) as SanctionAmount, SanctionDate, 
+                            sb.BudgetName, b.Bureau
+                            from AAMaster757 as am 
+                            inner join SourceOfBudget757 as sb on sb.RefID = am.SourceOfBudget 
+                            left join Buro757 as b on b.BuroID = am.AABureau
+                            where RefNo = @RefNo";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@RefNo", aaRefNo);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            if (dt.Rows.Count > 0)
+            {
+                DateTime aaDate = DateTime.Parse(dt.Rows[0]["AADate"].ToString());
+                AADate.Text = aaDate.ToString("yyyy-MM-dd");
+
+                DateTime sanctionDate = DateTime.Parse(dt.Rows[0]["SanctionDate"].ToString());
+                SanctionDate.Text = sanctionDate.ToString("yyyy-MM-dd");
+
+                SanctionAmount.Text = dt.Rows[0]["SanctionAmount"].ToString();
+
+                SourceOfBudget.DataSource = dt;
+                SourceOfBudget.DataTextField = "BudgetName";
+                SourceOfBudget.DataValueField = "BudgetName";
+                SourceOfBudget.DataBind();
+                SourceOfBudget.Items.Insert(0, new ListItem("------Select Source Of Budget------", "0"));
+
+                if (SourceOfBudget.SelectedIndex < 2) SourceOfBudget.SelectedIndex = 1;
+
+                Bureau.DataSource = dt;
+                Bureau.DataTextField = "Bureau";
+                Bureau.DataValueField = "Bureau";
+                Bureau.DataBind();
+                Bureau.Items.Insert(0, new ListItem("------Select Bureau------", "0"));
+
+                if (Bureau.SelectedIndex < 2) Bureau.SelectedIndex = 1;
+            }
+        }
+    }
+
+
+
     protected void ItemCategory_SelectedIndexChanged(object sender, EventArgs e)
     {
         string itemCategoryID = ItemCategory.SelectedValue;
@@ -373,6 +445,9 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
             ItemName.Items.Clear();
             ItemName.Items.Insert(0, new ListItem("------Select Item------", "0"));
+
+            ItemCode.Text = string.Empty;
+            ItemUOM.ClearSelection();
         }
     }
 
@@ -389,6 +464,62 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
             // clearing the items in the dropdown
             ItemName.Items.Clear();
             ItemName.Items.Insert(0, new ListItem("------Select Item------", "0"));
+
+            ItemCode.Text = string.Empty;
+            ItemUOM.ClearSelection();
+        }
+    }
+
+    protected void ItemName_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string itemRefID = ItemName.SelectedValue;
+
+        if (ItemName.SelectedValue != "0")
+        {
+            BindItemDetails(itemRefID);
+        }
+        else
+        {
+            ItemCode.Text = string.Empty;
+            ItemUOM.ClearSelection();
+        }
+    }
+
+    private void BindItemDetails(string itemRefID)
+    {
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = $@"select im.ItemCode, im.UMO, uom.UnitName
+                            from ItemMaster757 as im 
+                            left join UnitOfMeasurement757 as uom on uom.RefID = im.UMO 
+                            Where im.RefID = @RefID";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@RefID", itemRefID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            ItemCode.Text = dt.Rows[0]["ItemCode"].ToString();
+
+
+
+
+            ItemUOM.ClearSelection();
+
+            string itemUOMRefID = dt.Rows[0]["UMO"].ToString();
+
+            foreach (ListItem item in ItemUOM.Items)
+            {
+                if (item.Value == itemUOMRefID)
+                {
+                    item.Selected = true;
+                    break;
+                }
+            }
         }
     }
 
@@ -431,6 +562,41 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
 
 
+    //=========================={ GridView RowDeleting }==========================
+    protected void Grid_RowDeleting(object sender, GridViewDeleteEventArgs e)
+    {
+        GridView gridView = (GridView)sender;
+
+        // item gridview
+        if (gridView.ID == "itemGrid")
+        {
+            int rowIndex = e.RowIndex;
+
+            DataTable dt = ViewState["ItemDetails_VS"] as DataTable;
+
+            if (dt != null && dt.Rows.Count > rowIndex)
+            {
+                // removing record from the gridview
+                dt.Rows.RemoveAt(rowIndex);
+
+                ViewState["ItemDetails_VS"] = dt;
+                Session["ItemDetails"] = dt;
+
+                itemGrid.DataSource = dt;
+                itemGrid.DataBind();
+
+                // re-calculating total amount n assigning back to textbox
+                //double? totalBillAmount = dt.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
+                //txtBillAmount.Text = totalBillAmount.HasValue ? totalBillAmount.Value.ToString("N2") : "0.00";
+
+                // re-calculating taxes
+                //FillTaxHead();
+            }
+        }
+    }
+
+
+
 
 
     //=========================={ Item Save Button Click Event }==========================
@@ -441,6 +607,11 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
     private void insertItemDetails()
     {
+        if (!Page.IsValid)
+        {
+            return;
+        }
+
         string itemCategory = ItemCategory.SelectedValue;
         string itemSubCategory = ItemSubCategory.SelectedValue;
         string itemName = ItemName.SelectedValue;
@@ -448,15 +619,15 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
         double itemQty = Convert.ToDouble(ItemQuantity.Text.ToString());
         string uom = ItemUOM.SelectedValue;
         double itemRate = Convert.ToDouble(ItemRate.Text.ToString());
+        double itemSubTotal = Convert.ToDouble(ItemSubTotalTxt.Text.ToString());
         string itemDescription = ItemDescription.Value;
-        double itemSubTotal = (itemQty * itemRate);
 
 
         if (itemRate >= 0.00 && itemQty >= 0)
         {
             DataTable dt = ViewState["ItemDetails_VS"] as DataTable ?? createItemDatatable();
 
-            AddRowToItemDataTable(dt, itemCategory, itemSubCategory, itemName, itemCode, itemQty, uom, itemRate, itemDescription, "MANUAL");
+            AddRowToItemDataTable(dt, itemCategory, itemSubCategory, itemName, itemCode, itemQty, uom, itemRate, itemSubTotal, itemDescription, "MANUAL");
 
             if (dt.Rows.Count > 0)
             {
@@ -490,6 +661,7 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
                 ItemCode.Text = string.Empty;
                 ItemQuantity.Text = string.Empty;
                 ItemRate.Text = string.Empty;
+                ItemSubTotalTxt.Text = string.Empty;
                 ItemDescription.Value = string.Empty;
 
 
@@ -653,7 +825,9 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
                 double itemRate = Convert.ToDouble(row["ItemRate"]);
                 string description = row["ItemDescription"].ToString();
 
-                AddRowToItemDataTable(dt, itemCategory, itemSubCategory, itemName, itemCode, itemQty, uom, itemRate, description, "EXCEL");
+                double itemSubTotal = (itemQty * itemRate);
+
+                AddRowToItemDataTable(dt, itemCategory, itemSubCategory, itemName, itemCode, itemQty, uom, itemRate, itemSubTotal, description, "EXCEL");
             }
         }
 
@@ -755,13 +929,13 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
         return dt;
     }
 
-    private void AddRowToItemDataTable(DataTable dt, string itemCategory, string itemSubCategory, string itemName, string itemCode, double itemQty, string uom, double itemRate, string description, string enteryMode)
+    private void AddRowToItemDataTable(DataTable dt, string itemCategory, string itemSubCategory, string itemName, string itemCode, double itemQty, string uom, double itemRate, double itemSubTotal, string description, string enteryMode)
     {
         // Create a new row
         DataRow row = dt.NewRow();
 
         // calculating item sub total price dynamically
-        double itemSubTotal = Convert.ToDouble(itemQty) * Convert.ToDouble(itemRate);
+        //double itemSubTotal = Convert.ToDouble(itemQty) * Convert.ToDouble(itemRate);
 
         //if (manualRadio.Checked)
 
@@ -790,8 +964,8 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
         row["ItemQuantity"] = itemQty;
         row["ItemUOM"] = uom;
         row["ItemRate"] = itemRate;
-        row["ItemDescription"] = description;
         row["ItemSubTotal"] = itemSubTotal;
+        row["ItemDescription"] = description;
 
         // checking for data entry mode
         row["DataEntryMode"] = enteryMode;
@@ -804,6 +978,33 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
 
 
+    //=========================={ Custom Validation }==========================
+    protected void ItemExistsCV_ServerValidate(object source, ServerValidateEventArgs args)
+    {
+        string itemName = ItemName.SelectedItem.Text;
+
+        if (Session["ItemDetails"] != null)
+        {
+            DataTable itemDT = (DataTable)Session["ItemDetails"];
+
+            if (itemDT.Rows.Count > 0)
+            {
+                foreach (DataRow row in itemDT.Rows)
+                {
+                    string itemNameDT = row["ItemName"].ToString();
+
+                    if (itemNameDT == itemName)
+                    {
+                        args.IsValid = false;
+                        ItemExistsCV.ErrorMessage = "item already exists";
+                        return;
+                    }
+                }
+            }
+        }
+
+        args.IsValid = true;
+    }
 
 
 

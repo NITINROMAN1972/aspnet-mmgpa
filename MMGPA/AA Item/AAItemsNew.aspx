@@ -78,11 +78,63 @@
                                     <asp:RequiredFieldValidator ID="rr1" ControlToValidate="AdminApproveNo" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select administrative approval number and title" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                 </div>
                             </div>
-                            <asp:DropDownList ID="AdminApproveNo" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                            <asp:DropDownList ID="AdminApproveNo" OnSelectedIndexChanged="AdminApproveNo_SelectedIndexChanged" AutoPostBack="true" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                        </div>
+
+                        <!-- AA Date -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal12" Text="" runat="server">A.A. Date</asp:Literal>
+                            </div>
+                            <asp:TextBox runat="server" ID="AADate" type="date" ReadOnly="true" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
                         </div>
 
                     </div>
                     <!-- 1st row Ends -->
+
+                    <!-- 2nd row Starts -->
+                    <div class="row mb-2">
+
+                        <!-- Sanction Amount -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal9" Text="" runat="server">Sanction Amount</asp:Literal>
+                            </div>
+                            <asp:TextBox runat="server" ID="SanctionAmount" type="text" ReadOnly="true" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
+                        <!-- Sanction Date -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal10" Text="" runat="server">Sanction Date</asp:Literal>
+                            </div>
+                            <asp:TextBox runat="server" ID="SanctionDate" type="date" ReadOnly="true" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
+                    </div>
+                    <!-- 2nd row Ends -->
+
+                    <!-- 3rd row Starts -->
+                    <div class="row mb-2">
+
+                        <!-- Source Of Budget -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal11" Text="" runat="server">Source Of Budget</asp:Literal>
+                            </div>
+                            <asp:DropDownList ID="SourceOfBudget" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                        </div>
+
+                        <!-- Bureau -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal13" Text="" runat="server">Bureau</asp:Literal>
+                            </div>
+                            <asp:DropDownList ID="Bureau" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                        </div>
+
+                    </div>
+                    <!-- 3rd row Ends -->
 
 
                 </div>
@@ -164,8 +216,13 @@
                                             <div>
                                                 <asp:RequiredFieldValidator ID="RequiredFieldValidator2" ControlToValidate="ItemName" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select item name" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                             </div>
+                                            <div>
+                                                <asp:CustomValidator ID="ItemExistsCV" OnServerValidate="ItemExistsCV_ServerValidate" ValidationGroup="ItemSave"
+                                                    ClientValidationFunction="checkItemExistence" Display="Dynamic" runat="server" CssClass="text-danger">
+                                                </asp:CustomValidator>
+                                            </div>
                                         </div>
-                                        <asp:DropDownList ID="ItemName" runat="server" AutoPostBack="false" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                                        <asp:DropDownList ID="ItemName" OnSelectedIndexChanged="ItemName_SelectedIndexChanged" runat="server" AutoPostBack="true" class="form-control is-invalid" CssClass=""></asp:DropDownList>
                                     </div>
 
                                     <!-- Item Code -->
@@ -194,7 +251,7 @@
                                                 <asp:RequiredFieldValidator ID="RequiredFieldValidator13" ControlToValidate="ItemQuantity" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter item quantity" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                             </div>
                                         </div>
-                                        <asp:TextBox ID="ItemQuantity" runat="server" type="number" steps="0.01" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                                        <asp:TextBox ID="ItemQuantity" runat="server" type="number" steps="0.01" onchange="calculateSubTotal()" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
                                     </div>
 
                                     <!-- Item UOM -->
@@ -216,7 +273,18 @@
                                                 <asp:RequiredFieldValidator ID="rr9" ControlToValidate="ItemRate" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter item rate / unit" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                             </div>
                                         </div>
-                                        <asp:TextBox ID="ItemRate" runat="server" type="number" steps="0.01" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                                        <asp:TextBox ID="ItemRate" runat="server" type="number" steps="0.01" onchange="calculateSubTotal()" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                                    </div>
+
+                                    <!-- Item Sub Total (JS) -->
+                                    <div class="col-md-3 align-self-end">
+                                        <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                            <asp:Literal ID="Literal6" Text="" runat="server">Item Sub Total</asp:Literal>
+                                            <div>
+                                                <asp:RequiredFieldValidator ID="RequiredFieldValidator5" ControlToValidate="ItemSubTotalTxt" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter item sub total" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                            </div>
+                                        </div>
+                                        <asp:TextBox ID="ItemSubTotalTxt" runat="server" type="number" steps="0.01" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
                                     </div>
 
                                 </div>
@@ -230,9 +298,6 @@
                                     <div class="col-md-10 align-self-end mb-3">
                                         <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                             <asp:Literal ID="Literal7" Text="" runat="server">Item Description</asp:Literal>
-                                            <div>
-                                                <asp:RequiredFieldValidator ID="RequiredFieldValidator3" ControlToValidate="ItemDescription" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter item description" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
-                                            </div>
                                         </div>
                                         <textarea id="ItemDescription" rows="2" cols="50" class="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1" runat="server"></textarea>
                                     </div>
@@ -322,7 +387,7 @@
 
                                 <hr class="border-bottom border-secondary-subtle mt-5 mb-5" />
 
-                                <asp:GridView ShowHeaderWhenEmpty="true" ID="itemGrid" runat="server" AutoGenerateColumns="false"
+                                <asp:GridView ShowHeaderWhenEmpty="true" ID="itemGrid" runat="server" AutoGenerateColumns="false" OnRowDeleting="Grid_RowDeleting"
                                     CssClass="table table-bordered  border border-1 border-dark-subtle text-center grid-custom mb-3">
                                     <HeaderStyle CssClass="align-middle" />
                                     <Columns>
@@ -343,12 +408,7 @@
                                         <asp:BoundField DataField="ItemQuantity" HeaderText="Item Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                         <asp:BoundField DataField="ItemUOMText" HeaderText="UOM" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                         <asp:BoundField DataField="ItemRate" HeaderText="Rate/Unit" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-
-                                        <asp:TemplateField HeaderText="Item Sub Total" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
-                                            <ItemTemplate>
-                                                <asp:TextBox ID="ItemSubTotal" Text='<%# Bind("ItemSubTotal") %>' type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="true" CssClass="col-md-12 fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
-                                            </ItemTemplate>
-                                        </asp:TemplateField>
+                                        <asp:BoundField DataField="ItemSubTotal" HeaderText="Item Sub Total" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
 
                                         <asp:BoundField DataField="ItemDescription" HeaderText="Description" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
 
@@ -360,6 +420,15 @@
                                                 <asp:CheckBox ID="CheckStatus" runat="server" AutoPostBack="false" Checked='<%# Eval("CheckStatus") %>' CssClass="" />
                                             </ItemTemplate>
                                             <ItemStyle HorizontalAlign="Center" />
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Action">
+                                            <ItemTemplate>
+                                                <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete" CommandArgument='<%# Container.DataItemIndex %>'>
+                                                    <asp:Image runat="server" ImageUrl="../assests/img/modern-cross-fill.svg" AlternateText="Edit" style="width: 28px; height: 28px;"/>
+                                                </asp:LinkButton>
+                                            </ItemTemplate>
+                                            <ItemStyle HorizontalAlign="Center" Width="100px" />
                                         </asp:TemplateField>
 
                                     </Columns>
@@ -399,6 +468,15 @@
 
 
         <script type="text/javascript">
+
+            // js function to do product of item qty & unit rate
+            function calculateSubTotal() {
+                var itemQuantity = parseInt(document.getElementById('<%= ItemQuantity.ClientID %>').value);
+                var itemRate = parseInt(document.getElementById('<%= ItemRate.ClientID %>').value);
+                var itemSubTotal = itemQuantity * itemRate;
+                document.getElementById('<%= ItemSubTotalTxt.ClientID %>').value = itemSubTotal; //itemSubTotal.toFixed(2); to roundup to 2 decimalsmals
+            }
+
             function toggleCheckBoxes(chkAll) {
                 var gridView = document.getElementById('<%= itemGrid.ClientID %>');
                 var checkBoxes = gridView.getElementsByTagName('input');

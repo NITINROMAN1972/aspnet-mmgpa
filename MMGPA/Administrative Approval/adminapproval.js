@@ -16,6 +16,13 @@ $(document).ready(function () {
         allowClear: false,
     });
 
+    // bureau
+    $('#AABureau').select2({
+        theme: 'classic',
+        placeholder: 'Select here.....',
+        allowClear: false,
+    });
+
     //------======={ Search / Update }=======------
 
     // search - administrative approval number

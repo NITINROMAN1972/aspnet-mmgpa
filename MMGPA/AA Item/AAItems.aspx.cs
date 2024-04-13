@@ -414,6 +414,9 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
             ItemName.Items.Clear();
             ItemName.Items.Insert(0, new ListItem("------Select Item------", "0"));
+
+            ItemCode.Text = string.Empty;
+            ItemUOM.ClearSelection();
         }
     }
 
@@ -430,6 +433,62 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
             // clearing the items in the dropdown
             ItemName.Items.Clear();
             ItemName.Items.Insert(0, new ListItem("------Select Item------", "0"));
+
+            ItemCode.Text = string.Empty;
+            ItemUOM.ClearSelection();
+        }
+    }
+
+    protected void ItemName_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string itemRefID = ItemName.SelectedValue;
+
+        if (ItemName.SelectedValue != "0")
+        {
+            BindItemDetails(itemRefID);
+        }
+        else
+        {
+            ItemCode.Text = string.Empty;
+            ItemUOM.ClearSelection();
+        }
+    }
+
+    private void BindItemDetails(string itemRefID)
+    {
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = $@"select im.ItemCode, im.UMO, uom.UnitName
+                            from ItemMaster757 as im 
+                            left join UnitOfMeasurement757 as uom on uom.RefID = im.UMO 
+                            Where im.RefID = @RefID";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@RefID", itemRefID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            ItemCode.Text = dt.Rows[0]["ItemCode"].ToString();
+
+
+
+
+            ItemUOM.ClearSelection();
+
+            string itemUOMRefID = dt.Rows[0]["UMO"].ToString();
+
+            foreach (ListItem item in ItemUOM.Items)
+            {
+                if (item.Value == itemUOMRefID)
+                {
+                    item.Selected = true;
+                    break;
+                }
+            }
         }
     }
 
@@ -627,7 +686,13 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
         using (SqlConnection con = new SqlConnection(connectionString))
         {
             con.Open();
-            string sql = "select RefNo, AANumber, AATitle, CONCAT(AANumber, '  -  ', AATitle) AS AAnoTitle from AAMaster757 where RefNo = @RefNo";
+            string sql = $@"select am.RefNo, am.AANumber, am.AATitle, CONCAT(am.AANumber, '  -  ', am.AATitle) AS AAnoTitle, am.AADate, 
+                            Concat(N'₹ ',Format(am.SanctionAmount, 'N', 'en-IN')) as SanctionAmount, SanctionDate, 
+                            sb.BudgetName, b.Bureau
+                            from AAMaster757 as am 
+                            inner join SourceOfBudget757 as sb on sb.RefID = am.SourceOfBudget 
+                            left join Buro757 as b on b.BuroID = am.AABureau
+                            where am.RefNo = @RefNo";
             SqlCommand cmd = new SqlCommand(sql, con);
             cmd.Parameters.AddWithValue("@RefNo", aaRefNo);
             cmd.ExecuteNonQuery();
@@ -637,13 +702,41 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
             ad.Fill(dt);
             con.Close();
 
-            AdminApproveNo.DataSource = dt;
-            AdminApproveNo.DataTextField = "AAnoTitle";
-            AdminApproveNo.DataValueField = "RefNo";
-            AdminApproveNo.DataBind();
-            AdminApproveNo.Items.Insert(0, new ListItem("------Select A.A. Number & A.A. Title------", "0"));
+            if (dt.Rows.Count > 0)
+            {
+                DateTime aaDate = DateTime.Parse(dt.Rows[0]["AADate"].ToString());
+                AADate.Text = aaDate.ToString("yyyy-MM-dd");
 
-            if (AdminApproveNo.SelectedIndex < 2) AdminApproveNo.SelectedIndex = 1;
+                DateTime sanctionDate = DateTime.Parse(dt.Rows[0]["SanctionDate"].ToString());
+                SanctionDate.Text = sanctionDate.ToString("yyyy-MM-dd");
+
+                SanctionAmount.Text = dt.Rows[0]["SanctionAmount"].ToString();
+
+
+                AdminApproveNo.DataSource = dt;
+                AdminApproveNo.DataTextField = "AAnoTitle";
+                AdminApproveNo.DataValueField = "RefNo";
+                AdminApproveNo.DataBind();
+                AdminApproveNo.Items.Insert(0, new ListItem("------Select A.A. Number & A.A. Title------", "0"));
+
+                if (AdminApproveNo.SelectedIndex < 2) AdminApproveNo.SelectedIndex = 1;
+
+                SourceOfBudget.DataSource = dt;
+                SourceOfBudget.DataTextField = "BudgetName";
+                SourceOfBudget.DataValueField = "BudgetName";
+                SourceOfBudget.DataBind();
+                SourceOfBudget.Items.Insert(0, new ListItem("------Select Source Of Budget------", "0"));
+
+                if (SourceOfBudget.SelectedIndex < 2) SourceOfBudget.SelectedIndex = 1;
+
+                Bureau.DataSource = dt;
+                Bureau.DataTextField = "Bureau";
+                Bureau.DataValueField = "Bureau";
+                Bureau.DataBind();
+                Bureau.Items.Insert(0, new ListItem("------Select Bureau------", "0"));
+
+                if (Bureau.SelectedIndex < 2) Bureau.SelectedIndex = 1;
+            }
         }
     }
 
@@ -763,6 +856,11 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
     private void insertItemDetails()
     {
+        if (!Page.IsValid)
+        {
+            return;
+        }
+
         string itemCategory = ItemCategory.SelectedValue;
         string itemSubCategory = ItemSubCategory.SelectedValue;
         string itemName = ItemName.SelectedValue;
@@ -812,6 +910,7 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
                 ItemCode.Text = string.Empty;
                 ItemQuantity.Text = string.Empty;
                 ItemRate.Text = string.Empty;
+                ItemSubTotalTxt.Text = string.Empty;
                 ItemDescription.Value = string.Empty;
 
 
@@ -1120,6 +1219,39 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
         // Add the new row to the DataTable
         dt.Rows.Add(row);
     }
+
+
+
+
+
+    //=========================={ Custom Validation }==========================
+    protected void ItemExistsCV_ServerValidate(object source, ServerValidateEventArgs args)
+    {
+        string itemName = ItemName.SelectedValue;
+
+        if (Session["ItemDetails"] != null)
+        {
+            DataTable itemDT = (DataTable)Session["ItemDetails"];
+
+            if (itemDT.Rows.Count > 0)
+            {
+                foreach (DataRow row in itemDT.Rows)
+                {
+                    string itemNameDT = row["ItemName"].ToString();
+
+                    if (itemNameDT == itemName)
+                    {
+                        args.IsValid = false;
+                        ItemExistsCV.ErrorMessage = "item already exists";
+                        return;
+                    }
+                }
+            }
+        }
+
+        args.IsValid = true;
+    }
+
 
 
 

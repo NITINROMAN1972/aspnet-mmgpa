@@ -27,6 +27,7 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
                 AADate.Text = DateTime.Now.ToString("yyyy-MM-dd");
                 SanctionDate.Text = DateTime.Now.ToString("yyyy-MM-dd");
 
+                Burreau_DropDown();
                 DocumentType_DropDown();
                 SourceOfBudget_DropDown();
                 AAForItemCategory_DropDown();
@@ -256,6 +257,31 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
 
 
     //=========================={ Binding Search Dropdowns }==========================
+    private void Burreau_DropDown()
+    {
+        string userID = Session["UserId"].ToString();
+
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = "select * from Buro757";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            //cmd.Parameters.AddWithValue("@SaveBy", userID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            AABureau.DataSource = dt;
+            AABureau.DataTextField = "Bureau";
+            AABureau.DataValueField = "BuroID";
+            AABureau.DataBind();
+            AABureau.Items.Insert(0, new ListItem("------Select Bureau------", "0"));
+        }
+    }
+
     private void DocumentType_DropDown()
     {
         string userID = Session["UserId"].ToString();
@@ -263,7 +289,7 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
         using (SqlConnection con = new SqlConnection(connectionString))
         {
             con.Open();
-            string sql = "select * from DocumentType757";
+            string sql = "select * from DocumentType757 Where DocumentType = 'AA'";
             SqlCommand cmd = new SqlCommand(sql, con);
             //cmd.Parameters.AddWithValue("@SaveBy", userID);
             cmd.ExecuteNonQuery();
@@ -571,6 +597,7 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
         DateTime sanctionedDate = DateTime.Parse(SanctionDate.Text);
         string sourceOfBudget = SourceOfBudget.Text;
 
+        string aaBureau = AABureau.SelectedValue;
 
         // fetching new administrative approve reference number
         string aaRefNo = GetAdministrativeApproveRefNo(con,transaction);
@@ -606,6 +633,7 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
         cmd.Parameters.AddWithValue("@SanctionAmount", sanctionedAmount);
         cmd.Parameters.AddWithValue("@SanctionDate", sanctionedDate);
         cmd.Parameters.AddWithValue("@SourceOfBudget", sourceOfBudget);
+        cmd.Parameters.AddWithValue("@AABureau", aaBureau);
         cmd.Parameters.AddWithValue("@SaveBy", userID);
         cmd.ExecuteNonQuery();
 

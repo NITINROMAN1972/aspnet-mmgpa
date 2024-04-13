@@ -69,7 +69,7 @@
                     <div class="row mb-2">
 
                         <!-- Administrative Approva Title -->
-                        <div class="col-md-12 align-self-end">
+                        <div class="col-md-8 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                 <asp:Literal ID="Literal7" Text="" runat="server">A.A. Title<em style="color: red">*</em></asp:Literal>
                                 <div>
@@ -77,6 +77,17 @@
                                 </div>
                             </div>
                             <asp:TextBox runat="server" ID="AATitle" type="text" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
+                        <!-- Bureau -->
+                        <div class="col-md-4 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal5" Text="" runat="server">Bureau<em style="color: red">*</em></asp:Literal>
+                                <div>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator2" ControlToValidate="AABureau" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select aa bureau" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                </div>
+                            </div>
+                            <asp:DropDownList ID="AABureau" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
                         </div>
 
                     </div>

@@ -26,6 +26,7 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
             {
                 // searcha DD
                 AdministrativeAprovalNo_Bind_Dropdown();
+                Burreau_DropDown();
             }
         }
         else
@@ -235,6 +236,31 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
         }
     }
 
+    private void Burreau_DropDown()
+    {
+        string userID = Session["UserId"].ToString();
+
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = "select * from Buro757";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            //cmd.Parameters.AddWithValue("@SaveBy", userID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            AABureau.DataSource = dt;
+            AABureau.DataTextField = "Bureau";
+            AABureau.DataValueField = "BuroID";
+            AABureau.DataBind();
+            AABureau.Items.Insert(0, new ListItem("------Select Bureau------", "0"));
+        }
+    }
+
     private void DocumentType_DropDown()
     {
         //string userID = Session["UserId"].ToString();
@@ -242,7 +268,7 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
         using (SqlConnection con = new SqlConnection(connectionString))
         {
             con.Open();
-            string sql = "select * from DocumentType757";
+            string sql = "select * from DocumentType757 Where DocumentType = 'AA'";
             SqlCommand cmd = new SqlCommand(sql, con);
             //cmd.Parameters.AddWithValue("@SaveBy", userID);
             cmd.ExecuteNonQuery();
@@ -438,12 +464,13 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
             connection.Open();
 
             string sql = $@"select aa.RefNo , aa.AANumber, aa.AADate, aa.AATitle, aa.AAFor, Concat(N'₹ ', Format(aa.SanctionAmount, 'N', 'en-IN')) as SanctionAmount, aa.SanctionDate, aa.SourceOfBudget, budget.BudgetName, 
-                            LEN(aa.AAFor) - LEN(REPLACE(aa.AAFor, ',', '')) + 1 AS NumberOfItems, 
+                            LEN(aa.AAFor) - LEN(REPLACE(aa.AAFor, ',', '')) + 1 AS NumberOfItems, b.Bureau, 
                             case when (select count (*) from AAVerification757 as verify where verify.AARefNo = aa.RefNo) > 0 then 'Verified' else 'Pending' end as VerificationStatus
                             from AAMaster757 as aa 
                             left join SourceOfBudget757 budget on budget.refid = aa.SourceOfBudget 
                             left join ItemCategory757 as ic on ic.RefId = aa.AAFor
-                            left join AAVerification757 as verify on verify.AARefNo = aa.RefNo
+                            left join AAVerification757 as verify on verify.AARefNo = aa.RefNo 
+                            left join Buro757 as b on b.BuroID = aa.AABureau
                             WHERE 1=1";
 
             if (!string.IsNullOrEmpty(aaNo))
@@ -589,52 +616,65 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
             ad.Fill(dt);
             con.Close();
 
-            Session["HeaderDataTable"] = dt;
-
-            AANumber.Text = dt.Rows[0]["AANumber"].ToString();
-            AATitle.Text = dt.Rows[0]["AATitle"].ToString();
-            SanctionAmount.Text = dt.Rows[0]["SanctionAmount"].ToString();
-
-            DateTime aaDate = DateTime.Parse(dt.Rows[0]["AADate"].ToString());
-            DateTime sanctionDate = DateTime.Parse(dt.Rows[0]["AADate"].ToString());
-
-            AADate.Text = aaDate.ToString("yyyy-MM-dd");
-            SanctionDate.Text = sanctionDate.ToString("yyyy-MM-dd");
-
-
-
-            // clearing existing selections
-            SourceOfBudget.ClearSelection();
-
-            string sourceOfBudgetRefID = dt.Rows[0]["budgetRefId"].ToString();
-
-            foreach (ListItem item in SourceOfBudget.Items)
+            if(dt.Rows.Count > 0)
             {
-                if (item.Value == sourceOfBudgetRefID)
+                Session["HeaderDataTable"] = dt;
+
+                AANumber.Text = dt.Rows[0]["AANumber"].ToString();
+                AATitle.Text = dt.Rows[0]["AATitle"].ToString();
+                SanctionAmount.Text = dt.Rows[0]["SanctionAmount"].ToString();
+
+                DateTime aaDate = DateTime.Parse(dt.Rows[0]["AADate"].ToString());
+                DateTime sanctionDate = DateTime.Parse(dt.Rows[0]["AADate"].ToString());
+
+                AADate.Text = aaDate.ToString("yyyy-MM-dd");
+                SanctionDate.Text = sanctionDate.ToString("yyyy-MM-dd");
+
+
+
+                // clearing existing selections
+                SourceOfBudget.ClearSelection();
+
+                string sourceOfBudgetRefID = dt.Rows[0]["budgetRefId"].ToString();
+
+                foreach (ListItem item in SourceOfBudget.Items)
                 {
-                    item.Selected = true;
-                    break;
+                    if (item.Value == sourceOfBudgetRefID)
+                    {
+                        item.Selected = true;
+                        break;
+                    }
                 }
-            }
 
+                // checking only saved DD lists in multi-checkbox
 
+                AAForItemCategory.ClearSelection();
 
+                string savedValues = dt.Rows[0]["AAFor"].ToString();
+                string[] savedItems = savedValues.Split(',');
 
-
-            // checking only saved DD lists in multi-checkbox
-
-            AAForItemCategory.ClearSelection();
-
-            string savedValues = dt.Rows[0]["AAFor"].ToString();
-            string[] savedItems = savedValues.Split(',');
-
-            foreach (string value in savedItems)
-            {
-                ListItem item = AAForItemCategory.Items.FindByValue(value);
-
-                if (item != null)
+                foreach (string value in savedItems)
                 {
-                    item.Selected = true;
+                    ListItem item = AAForItemCategory.Items.FindByValue(value);
+
+                    if (item != null)
+                    {
+                        item.Selected = true;
+                    }
+                }
+
+                // clearing existing selections 
+                AABureau.ClearSelection();
+
+                string aaBureauID = dt.Rows[0]["AABureau"].ToString();
+
+                foreach (ListItem item in AABureau.Items)
+                {
+                    if (item.Value == aaBureauID)
+                    {
+                        item.Selected = true;
+                        break;
+                    }
                 }
             }
         }
@@ -948,6 +988,7 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
         DateTime sanctionedDate = DateTime.Parse(SanctionDate.Text);
         string sourceOfBudget = SourceOfBudget.Text;
 
+        string aaBureau = AABureau.SelectedValue;
 
 
         // combining selected category refIDs into comma seperated string
@@ -971,7 +1012,7 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
         // SQL update query
         string sql = $@"Update AAMaster757 SET 
                         AANumber=@AANumber, AADate=@AADate, AATitle=@AATitle, AAFor=@AAFor, SanctionAmount=@SanctionAmount, 
-                        SanctionDate=@SanctionDate, SourceOfBudget=@SourceOfBudget
+                        SanctionDate=@SanctionDate, SourceOfBudget=@SourceOfBudget, AABureau=@AABureau 
                         WHERE RefNo=@RefNo";
         SqlCommand cmd = new SqlCommand(sql, con, transaction);
 
@@ -982,6 +1023,7 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
         cmd.Parameters.AddWithValue("@SanctionAmount", sanctionedAmount);
         cmd.Parameters.AddWithValue("@SanctionDate", sanctionedDate);
         cmd.Parameters.AddWithValue("@SourceOfBudget", sourceOfBudget);
+        cmd.Parameters.AddWithValue("@AABureau", aaBureau);
         cmd.Parameters.AddWithValue("@RefNo", aaRefNo);
         cmd.ExecuteNonQuery();
 

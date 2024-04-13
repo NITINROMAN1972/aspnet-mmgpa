@@ -10,6 +10,8 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Drawing;
+using System.Activities.Expressions;
+using System.Data.Odbc;
 
 public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 {
@@ -20,7 +22,7 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
         // Project: MMGPA
         // Code: 757
 
-        Session["UserId"] = "10223"; // client - milind
+        //Session["UserId"] = "10223"; // client - milind
 
         if (Session["UserId"] != null)
         {
@@ -37,6 +39,10 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
                 // initially manual entry option
                 itemEnterManualDiv.Visible = true;
+
+                // closing item session
+                ViewState["ItemDetails_VS"] = null;
+                Session["ItemDetails"] = null;
             }
         }
         else
@@ -389,6 +395,8 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
             ItemName.Items.Clear();
             ItemName.Items.Insert(0, new ListItem("------Select Item------", "0"));
+
+            ItemUOM.ClearSelection();
         }
     }
 
@@ -405,6 +413,58 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
             // clearing the items in the dropdown
             ItemName.Items.Clear();
             ItemName.Items.Insert(0, new ListItem("------Select Item------", "0"));
+
+            ItemUOM.ClearSelection();
+        }
+    }
+
+
+
+
+    protected void ItemName_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string itemRefID = ItemName.SelectedValue;
+
+        if (ItemName.SelectedValue != "0")
+        {
+            BindItemDetails(itemRefID);
+        }
+        else
+        {
+            ItemUOM.ClearSelection();
+        }
+    }
+
+    private void BindItemDetails(string itemRefID)
+    {
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = $@"select im.ItemCode, im.UMO, uom.UnitName
+                            from ItemMaster757 as im 
+                            left join UnitOfMeasurement757 as uom on uom.RefID = im.UMO 
+                            Where im.RefID = @RefID";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@RefID", itemRefID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            ItemUOM.ClearSelection();
+
+            string itemUOMRefID = dt.Rows[0]["UMO"].ToString();
+
+            foreach (ListItem item in ItemUOM.Items)
+            {
+                if (item.Value == itemUOMRefID)
+                {
+                    item.Selected = true;
+                    break;
+                }
+            }
         }
     }
 
@@ -437,15 +497,15 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
         excelRadio.Enabled = false;
 
         // clearing existing item grid
-        itemDiv.Visible = false;
+        //itemDiv.Visible = false;
 
         // clearing items gridview
-        itemGrid.DataSource = null;
-        itemGrid.DataBind();
+        //itemGrid.DataSource = null;
+        //itemGrid.DataBind();
 
         // clering the items session
-        ViewState["ItemDetails_VS"] = null;
-        Session["ItemDetails"] = null;
+        //ViewState["ItemDetails_VS"] = null;
+        //Session["ItemDetails"] = null;
     }
 
 
@@ -519,23 +579,25 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
             // CTE wit row_number window function
             string sql = $@"WITH UniqueItems AS (
-                            SELECT ai.*, cat.CategoryName AS ItemCategoryText, subcat.SubCategory AS ItemSubCategoryText, 
-                            item.ItemName AS ItemNameText, uom.UnitName AS ItemUOMText, 
-                            ROW_NUMBER() OVER (PARTITION BY ai.ItemName ORDER BY ai.ItemName) AS RowNum, 
-                            (SELECT SUM(ItemQuantity) FROM AAItem757 WHERE ItemName = ai.ItemName AND DeleteBy IS NULL) AS AoTotalQty 
-                            FROM AAItem757 AS ai 
-                            LEFT JOIN AAMaster757 AS am ON am.RefNo = ai.AARefNo
-                            LEFT JOIN ItemCategory757 AS cat ON cat.RefID = ai.ItemCategory 
-                            LEFT JOIN ItemSubCategory757 AS subcat ON subcat.RefID = ai.ItemSubCategory 
-                            LEFT JOIN UnitOfMeasurement757 AS uom ON uom.RefID = ai.ItemUOM 
-                            LEFT JOIN ItemMaster757 AS item ON item.RefID = ai.ItemName 
-                            WHERE ai.ItemName = @ItemName AND ai.DeleteFlag IS NULL 
-                            AND ai.IsVerified = 'TRUE' 
-                        )
-                        SELECT 
-                            UI.*,
-                            (UI.AoTotalQty - COALESCE((SELECT SUM(TendorQuantity) FROM TenderBOM757 WHERE ItemName = UI.ItemName AND DeleteBy IS NULL), 0)) AS AoBalanceQty
-                        FROM UniqueItems AS UI WHERE UI.RowNum = 1";
+
+                                SELECT ai.*, cat.CategoryName AS ItemCategoryText, subcat.SubCategory AS ItemSubCategoryText, 
+                                item.ItemName AS ItemNameText, uom.UnitName AS ItemUOMText, 
+                                ROW_NUMBER() OVER (PARTITION BY ai.ItemName ORDER BY ai.ItemName) AS RowNum, 
+                                (SELECT SUM(ItemQuantity) FROM AAItem757 WHERE ItemName = ai.ItemName AND DeleteBy IS NULL) AS AoTotalQty 
+
+                                FROM AAItem757 AS ai 
+                                LEFT JOIN AAMaster757 AS am ON am.RefNo = ai.AARefNo
+                                LEFT JOIN ItemCategory757 AS cat ON cat.RefID = ai.ItemCategory 
+                                LEFT JOIN ItemSubCategory757 AS subcat ON subcat.RefID = ai.ItemSubCategory 
+                                LEFT JOIN UnitOfMeasurement757 AS uom ON uom.RefID = ai.ItemUOM 
+                                LEFT JOIN ItemMaster757 AS item ON item.RefID = ai.ItemName 
+                                WHERE ai.ItemName = @ItemName AND ai.DeleteFlag IS NULL 
+                                AND ai.IsVerified = 'TRUE' 
+                            )
+                            SELECT 
+                                UI.*,
+                                (UI.AoTotalQty - ISNULL((SELECT SUM(TenderQuantity) FROM TenderBOM757 WHERE ItemName = UI.ItemName AND DeleteBy IS NULL), 0)) AS AoBalanceQty
+                            FROM UniqueItems AS UI WHERE UI.RowNum = 1";
 
             SqlCommand cmd = new SqlCommand(sql, con);
             cmd.Parameters.AddWithValue("@ItemName", itemName);
@@ -554,141 +616,169 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                 if (!dt.Columns.Contains("CheckStatus"))
                 {
                     DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
-                    checkboxColumn.DefaultValue = true;
+                    checkboxColumn.DefaultValue = false;
                     dt.Columns.Add(checkboxColumn);
                 }
 
-                if (!dt.Columns.Contains("TenderQty"))
+                if (!dt.Columns.Contains("TenderQuantity"))
                 {
-                    DataColumn TenderQty = new DataColumn("TenderQty", typeof(int));
-                    TenderQty.DefaultValue = 0;
-                    dt.Columns.Add(TenderQty);
+                    DataColumn TenderQuantity = new DataColumn("TenderQuantity", typeof(int));
+                    TenderQuantity.DefaultValue = 0;
+                    dt.Columns.Add(TenderQuantity);
                 }
 
-                foreach (DataRow row in dt.Rows)
+                if (!dt.Columns.Contains("DataEntryMode"))
                 {
-                    row["DataEntryMode"] = "AAO";
-                    row["ItemSubTotal"] = "0";
+                    DataColumn DataEntryMode = new DataColumn("DataEntryMode", typeof(string));
+                    DataEntryMode.DefaultValue = "MANUAL";
+                    dt.Columns.Add(DataEntryMode);
                 }
 
-                itemGrid.DataSource = dt;
+                if (!dt.Columns.Contains("ItemSubTotal"))
+                {
+                    DataColumn ItemSubTotal = new DataColumn("ItemSubTotal", typeof(int));
+                    ItemSubTotal.DefaultValue = "0";
+                    dt.Columns.Add(ItemSubTotal);
+                }
+
+                DataTable finalDT;
+                if (ViewState["ItemDetails_VS"] != null)
+                {
+                    finalDT = ViewState["ItemDetails_VS"] as DataTable;
+                    finalDT.Merge(dt);
+                }
+                else
+                {
+                    finalDT = dt;
+                }
+
+                itemGrid.DataSource = finalDT;
                 itemGrid.DataBind();
 
                 // total item basic amount
-                double? totalItemAMount = dt.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
+                double? totalItemAMount = finalDT.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
                 //BasicAmount.Text = totalItemAMount.HasValue ? totalItemAMount.Value.ToString("N2") : "0.00";
 
-                ViewState["ItemDetails_VS"] = dt;
-                Session["ItemDetails"] = dt;
-
-                // sum of total bill amount
-                //double? totalBillAmount = dt.AsEnumerable().Sum(row => row["NetAmount"] is DBNull ? (double?)null : Convert.ToDouble(row["NetAmount"])) ?? 0.0;
-                //txtBillAmount.Text = totalBillAmount.HasValue ? totalBillAmount.Value.ToString("N2") : "0.00";
+                ViewState["ItemDetails_VS"] = finalDT;
+                Session["ItemDetails"] = finalDT;
             }
             else
             {
                 // item doesnt exists in AAItems, then just add it in gridview so that it will inserted in to the tenderBOM table
 
-                string sql1 = $@"SELECT item.RefID ,item.ItemName, item.ItemCode, cat.CategoryName AS ItemCategoryText, subcat.SubCategory AS ItemSubCategoryText, 
-                                item.ItemName AS ItemNameText, uom.UnitName AS ItemUOMText
-                                FROM ItemMaster757 AS item 
-                                LEFT JOIN ItemCategory757 AS cat ON cat.RefID = item.CategoryName 
-                                LEFT JOIN ItemSubCategory757 AS subcat ON subcat.RefID = item.SubCategory 
-                                LEFT JOIN UnitOfMeasurement757 AS uom ON uom.RefID = item.UMO 
-                                WHERE item.RefID = '1000003'";
+                string sqlNew = $@"WITH UniqueItems AS (
+	                                SELECT item.RefID ,item.ItemName, item.ItemCode, cat.CategoryName AS ItemCategoryText, subcat.SubCategory AS ItemSubCategoryText, 
+	                                item.ItemName AS ItemNameText, uom.UnitName AS ItemUOMText, 
+	                                ISNULL((SELECT SUM(ItemQuantity) FROM AAItem757 WHERE ItemName = item.RefID AND DeleteBy IS NULL), 0) AS AoTotalQty
 
-                SqlCommand cmd1 = new SqlCommand(sql1, con);
-                cmd1.Parameters.AddWithValue("@RefID", itemName);
-                cmd1.ExecuteNonQuery();
+	                                FROM ItemMaster757 AS item 
+	                                LEFT JOIN ItemCategory757 AS cat ON cat.RefID = item.CategoryName 
+	                                LEFT JOIN ItemSubCategory757 AS subcat ON subcat.RefID = item.SubCategory 
+	                                LEFT JOIN UnitOfMeasurement757 AS uom ON uom.RefID = item.UMO 
+	                                WHERE item.RefID = @RefID 
+                                )
+                                SELECT 
+                                    UI.*,
+                                    (UI.AoTotalQty - ISNULL((SELECT SUM(TenderQuantity) FROM TenderBOM757 WHERE ItemName = UI.ItemName AND DeleteBy IS NULL), 0)) AS AoBalanceQty
+                                FROM UniqueItems AS UI";
 
-                SqlDataAdapter ad1 = new SqlDataAdapter(cmd1);
-                DataTable dt1 = new DataTable();
-                ad1.Fill(dt1);
+                SqlCommand cmdNew = new SqlCommand(sqlNew, con);
+                cmdNew.Parameters.AddWithValue("@RefID", itemName);
+                cmdNew.ExecuteNonQuery();
+
+                SqlDataAdapter adNew = new SqlDataAdapter(cmdNew);
+                DataTable dtNew = new DataTable();
+                adNew.Fill(dtNew);
 
                 con.Close();
 
-                if (dt1.Rows.Count > 0)
+                if (dtNew.Rows.Count > 0)
                 {
                     itemDiv.Visible = true;
 
-                    if (!dt1.Columns.Contains("CheckStatus"))
+                    if (!dtNew.Columns.Contains("CheckStatus"))
                     {
                         // adding the new column with checkboxes
                         DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
-                        checkboxColumn.DefaultValue = true;
-                        dt.Columns.Add(checkboxColumn);
+                        checkboxColumn.DefaultValue = false;
+                        dtNew.Columns.Add(checkboxColumn);
                     }
 
-                    if (!dt.Columns.Contains("TenderQty"))
+                    if (!dtNew.Columns.Contains("TenderQuantity"))
                     {
-                        DataColumn TenderQty = new DataColumn("TenderQty", typeof(int));
-                        TenderQty.DefaultValue = 0;
-                        dt.Columns.Add(TenderQty);
+                        DataColumn TenderQuantity = new DataColumn("TenderQuantity", typeof(int));
+                        TenderQuantity.DefaultValue = 0;
+                        dtNew.Columns.Add(TenderQuantity);
                     }
 
-                    if (!dt.Columns.Contains("DataEntryMode"))
+                    if (!dtNew.Columns.Contains("DataEntryMode"))
                     {
                         DataColumn DataEntryMode = new DataColumn("DataEntryMode", typeof(string));
-                        DataEntryMode.DefaultValue = "AAO";
-                        dt.Columns.Add(DataEntryMode);
+                        DataEntryMode.DefaultValue = "MANUAL";
+                        dtNew.Columns.Add(DataEntryMode);
                     }
 
-                    if (!dt.Columns.Contains("ItemSubTotal"))
+                    if (!dtNew.Columns.Contains("ItemSubTotal"))
                     {
                         DataColumn ItemSubTotal = new DataColumn("ItemSubTotal", typeof(int));
                         ItemSubTotal.DefaultValue = "0";
-                        dt.Columns.Add(ItemSubTotal);
+                        dtNew.Columns.Add(ItemSubTotal);
                     }
 
-                    if (!dt.Columns.Contains("AoTotalQty") && !dt.Columns.Contains("AoBalanceQty"))
+                    if (!dtNew.Columns.Contains("ItemRate"))
                     {
-                        DataColumn AoTotalQty = new DataColumn("AoTotalQty", typeof(int));
-                        AoTotalQty.DefaultValue = "0";
-                        dt.Columns.Add(AoTotalQty);
-
-                        DataColumn AoBalanceQty = new DataColumn("AoBalanceQty", typeof(int));
-                        AoBalanceQty.DefaultValue = "0";
-                        dt.Columns.Add(AoBalanceQty);
+                        DataColumn ItemRate = new DataColumn("ItemRate", typeof(int));
+                        ItemRate.DefaultValue = itemRate;
+                        dtNew.Columns.Add(ItemRate);
                     }
 
-                    itemGrid.DataSource = dt1;
+                    if (!dtNew.Columns.Contains("ItemDescription"))
+                    {
+                        DataColumn ItemDescription = new DataColumn("ItemDescription", typeof(string));
+                        ItemDescription.DefaultValue = itemDescription;
+                        dtNew.Columns.Add(ItemDescription);
+                    }
+
+                    DataTable finalDT;
+                    if (ViewState["ItemDetails_VS"] != null)
+                    {
+                        finalDT = ViewState["ItemDetails_VS"] as DataTable;
+                        finalDT.Merge(dtNew);
+                    }
+                    else
+                    {
+                        finalDT = dtNew;
+                    }
+
+                    itemGrid.DataSource = finalDT;
                     itemGrid.DataBind();
 
-                    ViewState["ItemDetails_VS"] = dt1;
-                    Session["ItemDetails"] = dt1;
+                    ViewState["ItemDetails_VS"] = finalDT;
+                    Session["ItemDetails"] = finalDT;
 
                     // total item basic amount
-                    double? totalItemAMount = dt1.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
+                    double? totalItemAMount = finalDT.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
                     //BasicAmount.Text = totalItemAMount.HasValue ? totalItemAMount.Value.ToString("N2") : "0.00";
 
                     Session["TotalBillAmount"] = totalItemAMount;
-
-                    // clearing input elements
-                    ItemCategory.SelectedIndex = 0;
-                    ItemSubCategory.SelectedIndex = 0;
-                    ItemUOM.SelectedIndex = 0;
-                    ItemName.SelectedIndex = 0;
-                    ReqBalanceQty.Text = string.Empty;
-                    TendorQuantity.Text = string.Empty;
-                    ItemRate.Text = string.Empty;
-                    ItemSubTotalTxt.Text = string.Empty;
-                    ItemDescription.Value = string.Empty;
                 }
             }
+
+            // clearing input elements
+            ItemCategory.SelectedIndex = 0;
+            ItemSubCategory.SelectedIndex = 0;
+            ItemUOM.SelectedIndex = 0;
+            ItemName.SelectedIndex = 0;
+            ReqBalanceQty.Text = string.Empty;
+            TendorQuantity.Text = string.Empty;
+            ItemRate.Text = string.Empty;
+            ItemSubTotalTxt.Text = string.Empty;
+            ItemDescription.Value = string.Empty;
         }
-
-
-        
-
-
-
-
-
-
 
         if (itemRate >= 0.00 && tendorQuantity >= 0)
         {
-            
+
         }
         else
         {
@@ -697,6 +787,8 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
             getSweetAlertErrorMandatory(title, message);
         }
     }
+
+
 
 
 
@@ -802,6 +894,15 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                                     // Method 1: delete data from Temp Table
                                     // Method 2: inserting data into temp table if needed
 
+                                    // removing empty records from excel DT data
+                                    for (int i = dt.Rows.Count - 1; i >= 0; i--)
+                                    {
+                                        if (string.IsNullOrWhiteSpace(dt.Rows[i]["ItemName"].ToString()))
+                                        {
+                                            dt.Rows.RemoveAt(i);
+                                        }
+                                    }
+
                                     InsertBOMToGrid(dt);
 
                                     // Method 3: To display the inserted data from Temp or Main Table
@@ -823,56 +924,129 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
         catch (Exception ex)
         {
             getSweetHTMLWzrning("Ops!", ex.Message);
+
+            itemGrid.DataSource = null;
+            itemGrid.DataBind();
+
+            ViewState["ItemDetails_VS"] = null;
+            Session["ItemDetails"] = null;
+
+            SheetName.Text = string.Empty;
         }
     }
 
     public void InsertBOMToGrid(DataTable dtItem)
     {
-        DataTable dt = ViewState["ItemDetails_VS"] as DataTable ?? createItemDatatable();
+        string itemNames = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemName")));
+        string itemCategories = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemCategory")));
+        string itemSubCategories = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemSubCategory")));
+        string itemUOM = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemUOM")));
+        string itemRate = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemRate")));
+        string itemDescriptions = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemDescription")));
 
-        foreach (DataRow row in dtItem.Rows)
+        using (SqlConnection con = new SqlConnection(connectionString))
         {
-            //int rowIndex = dt.Rows.IndexOf(row);
-            //dt.Rows.RemoveAt(rowIndex);
+            con.Open();
 
-            // checking if all fields in the row have data
-            if (row.ItemArray.All(field => !string.IsNullOrEmpty(field.ToString())))
+            string sql = "SP_TenderEstimation_ExcelUplod";
+
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@ItemNames", itemNames);
+            cmd.Parameters.AddWithValue("@ItemCategories", itemCategories);
+            cmd.Parameters.AddWithValue("@ItemSubCategories", itemSubCategories);
+            cmd.Parameters.AddWithValue("@ItemUOMs", itemUOM);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+
+            con.Close();
+
+            foreach (DataRow row in dt.Rows)
             {
-                string itemCategory = row["ItemCategory"].ToString();
-                string itemSubCategory = row["ItemSubCategory"].ToString();
-                string itemName = row["ItemName"].ToString();
-                double tendorQuantity = Convert.ToDouble(row["TendorQuantity"].ToString());
-                string uom = row["ItemUOM"].ToString();
-                double itemRate = Convert.ToDouble(row["ItemRate"]);
-                string description = row["ItemDescription"].ToString();
+                int rowIndex = dt.Rows.IndexOf(row);
 
-                AddRowToItemDataTable(dt, itemCategory, itemSubCategory, itemName, tendorQuantity, uom, itemRate, description, "EXCEL");
+                // attaching item rate and description dynamically to empty columns from SP resultset
+                if (row["ItemNameText"].ToString() == dtItem.Rows[rowIndex]["ItemName"].ToString())
+                {
+                    row["ItemRate"] = dtItem.Rows[rowIndex]["ItemRate"].ToString();
+                    row["ItemDescription"] = dtItem.Rows[rowIndex]["ItemDescription"].ToString();
+                }
             }
-        }
 
-        if (dt.Rows.Count > 0)
-        {
-            itemDiv.Visible = true;
+            // getting all items from result set from dt
+            HashSet<string> existingItemNames = new HashSet<string>(dt.AsEnumerable().Select(row => row.Field<string>("ItemNameText")));
 
-            if (!dt.Columns.Contains("CheckStatus"))
+            // iterating the result data to check if item exists or not
+            foreach (DataRow sourceRow in dtItem.Rows)
             {
-                // adding the new column with checkboxes
-                DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
-                checkboxColumn.DefaultValue = false;
-                dt.Columns.Add(checkboxColumn);
+                string sourceItemName = sourceRow.Field<string>("ItemName");
+
+                if (!existingItemNames.Contains(sourceItemName))
+                {
+                    DataRow newRow = dt.NewRow();
+
+                    newRow["ItemNameText"] = sourceItemName;
+                    newRow["ItemCategoryText"] = sourceRow.Field<string>("ItemCategory");
+                    newRow["ItemSubCategoryText"] = sourceRow.Field<string>("ItemSubCategory");
+                    newRow["ItemUOMText"] = sourceRow.Field<string>("ItemUOM");
+                    newRow["ItemRate"] = sourceRow.Field<string>("ItemRate");
+                    newRow["ItemDescription"] = sourceRow.Field<string>("ItemDescription");
+                    newRow["AoTotalQty"] = 0;
+                    newRow["AoBalanceQty"] = 0;
+
+                    dt.Rows.Add(newRow);
+                }
             }
 
-            itemGrid.DataSource = dt;
-            itemGrid.DataBind();
+            if (dt.Rows.Count > 0)
+            {
+                itemDiv.Visible = true;
 
-            // total item basic amount
-            double? totalItemAMount = dt.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
-            //BasicAmount.Text = totalItemAMount.HasValue ? totalItemAMount.Value.ToString("N2") : "0.00";
+                if (!dt.Columns.Contains("CheckStatus"))
+                {
+                    // adding the new column with checkboxes
+                    DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
+                    checkboxColumn.DefaultValue = false;
+                    dt.Columns.Add(checkboxColumn);
+                }
 
-            ViewState["ItemDetails_VS"] = dt;
-            Session["ItemDetails"] = dt;
+                if (!dt.Columns.Contains("TenderQuantity"))
+                {
+                    DataColumn TenderQuantity = new DataColumn("TenderQuantity", typeof(int));
+                    TenderQuantity.DefaultValue = 0;
+                    dt.Columns.Add(TenderQuantity);
+                }
 
-            SheetName.Text = string.Empty;
+                if (!dt.Columns.Contains("ItemSubTotal"))
+                {
+                    DataColumn ItemSubTotal = new DataColumn("ItemSubTotal", typeof(int));
+                    ItemSubTotal.DefaultValue = 0;
+                    dt.Columns.Add(ItemSubTotal);
+                }
+
+                if (!dt.Columns.Contains("DataEntryMode"))
+                {
+                    DataColumn DataEntryMode = new DataColumn("DataEntryMode", typeof(string));
+                    DataEntryMode.DefaultValue = "EXCEL";
+                    dt.Columns.Add(DataEntryMode);
+                }
+
+                itemGrid.DataSource = dt;
+                itemGrid.DataBind();
+
+                // total item basic amount
+                //double? totalItemAMount = dt.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
+                //BasicAmount.Text = totalItemAMount.HasValue ? totalItemAMount.Value.ToString("N2") : "0.00";
+
+                ViewState["ItemDetails_VS"] = dt;
+                Session["ItemDetails"] = dt;
+
+                SheetName.Text = string.Empty;
+            }
         }
     }
 
@@ -902,7 +1076,6 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
             if (AANo.SelectedIndex == -1)
             {
                 // no list is selected or selected
-
                 itemDiv.Visible = false;
 
                 // clearing items gridview
@@ -938,7 +1111,7 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                                     )
                                     SELECT 
                                         UI.*,
-                                        (UI.AoTotalQty - COALESCE((SELECT SUM(TendorQuantity) FROM TenderBOM757 WHERE ItemName = UI.ItemName AND DeleteBy IS NULL), 0)) AS AoBalanceQty
+                                        (UI.AoTotalQty - COALESCE((SELECT SUM(TenderQuantity) FROM TenderBOM757 WHERE ItemName = UI.ItemName AND DeleteBy IS NULL), 0)) AS AoBalanceQty
                                     FROM UniqueItems AS UI WHERE UI.RowNum = 1";
 
 
@@ -959,21 +1132,32 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                         if (!dt.Columns.Contains("CheckStatus"))
                         {
                             DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
-                            checkboxColumn.DefaultValue = true;
+                            checkboxColumn.DefaultValue = false;
                             dt.Columns.Add(checkboxColumn);
                         }
 
-                        if (!dt.Columns.Contains("TenderQty"))
+                        if (!dt.Columns.Contains("TenderQuantity"))
                         {
-                            DataColumn TenderQty = new DataColumn("TenderQty", typeof(int));
-                            TenderQty.DefaultValue = 0;
-                            dt.Columns.Add(TenderQty);
+                            DataColumn TenderQuantity = new DataColumn("TenderQuantity", typeof(int));
+                            TenderQuantity.DefaultValue = 0;
+                            dt.Columns.Add(TenderQuantity);
                         }
 
                         foreach (DataRow row in dt.Rows)
                         {
                             row["DataEntryMode"] = "AAO";
                             row["ItemSubTotal"] = "0";
+                        }
+
+                        DataTable finalDT;
+                        if (ViewState["ItemDetails_VS"] != null)
+                        {
+                            finalDT = ViewState["ItemDetails_VS"] as DataTable;
+                            finalDT.Merge(dt);
+                        }
+                        else
+                        {
+                            finalDT = dt;
                         }
 
                         itemGrid.DataSource = dt;
@@ -1023,7 +1207,7 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
         {
             int rowIndex = itemRow.RowIndex;
 
-            TextBox TenderQtyTxt = itemRow.FindControl("TenderQty") as TextBox;
+            TextBox TenderQtyTxt = itemRow.FindControl("TenderQuantity") as TextBox;
             decimal tenderQty = Convert.ToDecimal(TenderQtyTxt.Text);
 
             TextBox ItemRateTxt = itemRow.FindControl("ItemRate") as TextBox;
@@ -1058,7 +1242,7 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
         {
             int rowIndex = itemRow.RowIndex;
 
-            TextBox TenderQtyTxt = itemRow.FindControl("TenderQty") as TextBox;
+            TextBox TenderQtyTxt = itemRow.FindControl("TenderQuantity") as TextBox;
             decimal tenderQty = Convert.ToDecimal(TenderQtyTxt.Text);
 
             TextBox ItemRateTxt = itemRow.FindControl("ItemRate") as TextBox;
@@ -1093,21 +1277,44 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
     {
         string itemName = ItemName.SelectedValue;
 
-        DataTable itemDT = (DataTable)Session["ItemDetails"];
-
-        foreach (DataRow row in itemDT.Rows)
+        if (Session["ItemDetails"] != null)
         {
-            string itemNameDT = row["ItemName"].ToString();
+            DataTable itemDT = (DataTable)Session["ItemDetails"];
 
-            if (itemNameDT == itemName)
+            if (itemDT.Rows.Count > 0)
             {
-                args.IsValid = false;
-                ItemExistsCV.ErrorMessage = "The selected item already exists";
-                return;
+                foreach (DataRow row in itemDT.Rows)
+                {
+                    string itemNameDT = row["ItemName"].ToString();
+
+                    if (itemNameDT == itemName)
+                    {
+                        args.IsValid = false;
+                        ItemExistsCV.ErrorMessage = "The selected item already exists";
+                        return;
+                    }
+                }
             }
         }
 
         args.IsValid = true;
+    }
+
+    protected void TenderQtyGridCV_ServerValidate(object source, ServerValidateEventArgs args)
+    {
+        GridViewRow row = (GridViewRow)((CustomValidator)source).NamingContainer;
+
+        TextBox TenderQtyTxt = (TextBox)row.FindControl("TenderQuantity");
+        decimal tenderQty = Convert.ToDecimal(TenderQtyTxt.Text);
+
+        CheckBox CheckStatusTxt = (CheckBox)row.FindControl("CheckStatus");
+
+        if (CheckStatusTxt.Checked)
+        {
+            args.IsValid = (tenderQty > 0);
+
+            if (!args.IsValid) ((CustomValidator)source).ErrorMessage = "enter tender qty";
+        }
     }
 
 
@@ -1244,19 +1451,19 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
 
 
-
-
-
-
-
     //=========================={ Submit Button Click Event }==========================
     protected void btnBack_Click(object sender, EventArgs e)
     {
-        Response.Redirect("TendorBOM.aspx");
+        Response.Redirect("TenderEstimation.aspx");
     }
 
     protected void btnSubmit_Click(object sender, EventArgs e)
     {
+        if (!Page.IsValid)
+        {
+            return;
+        }
+
         bool someChecked = false;
 
         foreach (GridViewRow row in itemGrid.Rows)
@@ -1287,7 +1494,7 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
                         string estimateNo = Session["EstimateNo"].ToString();
 
-                        getSweetAlertSuccessRedirectMandatory("Success!", $"The Tendor Estimation: {estimateNo} Successfully Created", "TendorBOM.aspx");
+                        getSweetAlertSuccessRedirectMandatory("Success!", $"The Tendor Estimation: {estimateNo} Successfully Created", "TenderEstimation.aspx");
                     }
                     catch (Exception ex)
                     {
@@ -1311,8 +1518,6 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
             getSweetHTMLWzrning("No Items Are Checked", "Kindly Check Minimum 1 Item To Proceed Further");
         }
     }
-
-
 
 
 
@@ -1345,6 +1550,12 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                 // only checked items will be inserted
                 if (chkStatus != null && chkStatus.Checked)
                 {
+                    TextBox TenderQtyTxt = (TextBox)itemGrid.Rows[rowIndex].FindControl("TenderQuantity");
+                    decimal tenderQty = Convert.ToDecimal(TenderQtyTxt.Text);
+
+                    TextBox ItemRateTxt = (TextBox)itemGrid.Rows[rowIndex].FindControl("ItemRate");
+                    decimal itemRate = Convert.ToDecimal(ItemRateTxt.Text);
+
                     // new item refernennce no
                     string itemRefNo_New = GetTendorItemsRefNo(con, transaction);
 
@@ -1358,9 +1569,9 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
                         //excel entry
                         string sql = $@"insert into TenderBOM757 
-                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, TendorQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
+                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, AoTotalQty, AoBalanceQty, TendorQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
                                         values 
-                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @TendorQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
+                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @AoTotalQty, @AoBalanceQty, @TendorQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
 
                         SqlCommand cmd = new SqlCommand(sql, con, transaction);
                         cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
@@ -1369,9 +1580,11 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                         cmd.Parameters.AddWithValue("@ItemCategory", itemCategoryId);
                         cmd.Parameters.AddWithValue("@ItemSubCategory", itemSubCategoryId);
                         cmd.Parameters.AddWithValue("@ItemName", itemId);
-                        cmd.Parameters.AddWithValue("@TendorQuantity", row["TendorQuantity"]);
+                        cmd.Parameters.AddWithValue("@AoTotalQty", row["AoTotalQty"]);
+                        cmd.Parameters.AddWithValue("@AoBalanceQty", row["AoBalanceQty"]);
+                        cmd.Parameters.AddWithValue("@TendorQuantity", tenderQty);
                         cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
-                        cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
+                        cmd.Parameters.AddWithValue("@ItemRate", itemRate);
                         cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
                         cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
                         cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
@@ -1383,9 +1596,9 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                     {
                         // manual entry OR A.A. items (existing items)
                         string sql = $@"insert into TenderBOM757 
-                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, TendorQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
+                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, AoTotalQty, AoBalanceQty, TenderQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
                                         values 
-                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @TendorQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
+                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @AoTotalQty, @AoBalanceQty, @TenderQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
 
                         SqlCommand cmd = new SqlCommand(sql, con, transaction);
                         cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
@@ -1394,9 +1607,11 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                         cmd.Parameters.AddWithValue("@ItemCategory", row["ItemCategory"]);
                         cmd.Parameters.AddWithValue("@ItemSubCategory", row["ItemSubCategory"]);
                         cmd.Parameters.AddWithValue("@ItemName", row["ItemName"]);
-                        cmd.Parameters.AddWithValue("@TendorQuantity", row["TendorQuantity"]);
+                        cmd.Parameters.AddWithValue("@AoTotalQty", row["AoTotalQty"]);
+                        cmd.Parameters.AddWithValue("@AoBalanceQty", row["AoBalanceQty"]);
+                        cmd.Parameters.AddWithValue("@TenderQuantity", tenderQty);
                         cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
-                        cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
+                        cmd.Parameters.AddWithValue("@ItemRate", itemRate);
                         cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
                         cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
                         cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);

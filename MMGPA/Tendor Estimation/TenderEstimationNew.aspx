@@ -64,7 +64,7 @@
 
                     <!-- Heading 1 -->
                     <div class="fw-normal fs-5 fw-medium text-body-secondary border-bottom pb-2 mb-4">
-                        <asp:Literal Text="Tendor Details" runat="server"></asp:Literal>
+                        <asp:Literal Text="Estimation Details" runat="server"></asp:Literal>
                     </div>
 
                     <!-- 1st row Starts -->
@@ -185,7 +185,7 @@
                                                 </asp:CustomValidator>
                                             </div>
                                         </div>
-                                        <asp:DropDownList ID="ItemName" runat="server" AutoPostBack="false" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                                        <asp:DropDownList ID="ItemName" OnSelectedIndexChanged="ItemName_SelectedIndexChanged" runat="server" AutoPostBack="true" class="form-control is-invalid" CssClass=""></asp:DropDownList>
                                     </div>
 
                                     <!-- Req Balance Qty -->
@@ -372,7 +372,7 @@
 
 
                             <!-- Item GridView Starts -->
-                            <div id="itemDiv" runat="server" visible="false" class="mt-3">
+                            <div id="itemDiv" runat="server" visible="true" class="mt-3">
 
                                 <hr class="border-bottom border-secondary-subtle mt-5 mb-5" />
 
@@ -387,7 +387,7 @@
                                                     <%#Container.DataItemIndex + 1%>
                                                 </span>
                                             </ItemTemplate>
-                                            <ItemStyle CssClass="col-md-1" />
+                                            <ItemStyle CssClass="col-md-1 align-middle" />
                                             <ItemStyle Font-Size="15px" />
                                         </asp:TemplateField>
                                         <asp:BoundField DataField="ItemCategoryText" HeaderText="Item Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
@@ -399,7 +399,8 @@
 
                                         <asp:TemplateField HeaderText="Tender Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
                                             <ItemTemplate>
-                                                <asp:TextBox ID="TenderQty" Text='<%# Bind("TenderQty") %>' AutoPostBack="true" OnTextChanged="ItemSubTotal_TextChanged" type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="true" CssClass="col-md-12 fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
+                                                <asp:TextBox ID="TenderQuantity" Text='<%# Bind("TenderQuantity") %>' AutoPostBack="true" OnTextChanged="ItemSubTotal_TextChanged" type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="true" CssClass="col-md-12 fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
+                                                <asp:CustomValidator ID="TenderQtyGridCV" ControlToValidate="TenderQuantity" OnServerValidate="TenderQtyGridCV_ServerValidate" ValidationGroup="finalSubmit" ErrorMessage="" runat="server" ForeColor="Red" Display="Dynamic" ></asp:CustomValidator>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 

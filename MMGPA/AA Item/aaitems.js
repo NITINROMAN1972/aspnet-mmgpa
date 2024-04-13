@@ -49,6 +49,19 @@ $(document).ready(function () {
         allowClear: false,
     });
 
+    // source of budget
+    $('#SourceOfBudget').select2({
+        theme: 'classic',
+        placeholder: 'Select here.....',
+        allowClear: false,
+    });
+
+    // bureau
+    $('#Bureau').select2({
+        theme: 'classic',
+        placeholder: 'Select here.....',
+        allowClear: false,
+    });
 
 
     // sumo select
@@ -139,6 +152,20 @@ $(document).ready(function () {
 
             // search - administrtive approval number
             $('#ddScAANo').select2({
+                theme: 'classic',
+                placeholder: 'Select here.....',
+                allowClear: false,
+            });
+
+            // source of budget
+            $('#SourceOfBudget').select2({
+                theme: 'classic',
+                placeholder: 'Select here.....',
+                allowClear: false,
+            });
+
+            // bureau
+            $('#Bureau').select2({
                 theme: 'classic',
                 placeholder: 'Select here.....',
                 allowClear: false,
