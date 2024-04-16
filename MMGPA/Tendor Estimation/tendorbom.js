@@ -1,7 +1,7 @@
 ﻿
 $(document).ready(function () {
 
-    // purchase order number & title
+    // purchase order 
     $('#PoNo').select2({
         theme: 'classic',
         placeholder: 'Select here.....',

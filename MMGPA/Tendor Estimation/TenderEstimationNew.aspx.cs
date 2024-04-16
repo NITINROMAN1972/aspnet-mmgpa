@@ -485,6 +485,8 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
         excelUploadDiv.Visible = true;
         itemEnterManualDiv.Visible = false;
         AAMultiCheckDiv.Visible = false;
+
+        throughAA.Enabled = false;
     }
 
     protected void throughAA_CheckedChanged(object sender, EventArgs e)
@@ -532,7 +534,7 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
     {
         string nextRefNo = "1000001";
 
-        string sql = "SELECT ISNULL(MAX(CAST(EstimateNo AS INT)), 1000000) + 1 AS NextRefNo FROM TenderBOM757";
+        string sql = "SELECT ISNULL(MAX(CAST(EstimateNo AS INT)), 1000000) + 1 AS NextRefNo FROM TenderEstimation757";
         SqlCommand cmd = new SqlCommand(sql, con, transaction);
 
         SqlDataAdapter ad = new SqlDataAdapter(cmd);
@@ -888,7 +890,7 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                             {
                                 // Checking column names present in excel sheet or not
                                 if (dt.Columns[0].ColumnName.Trim() == "ItemCategory" && dt.Columns[1].ColumnName.Trim() == "ItemSubCategory" &&
-                                dt.Columns[2].ColumnName.Trim() == "ItemName" && dt.Columns[3].ColumnName.Trim() == "TendorQuantity"
+                                dt.Columns[2].ColumnName.Trim() == "ItemName" && dt.Columns[3].ColumnName.Trim() == "TenderQuantity"
                                 && dt.Columns[4].ColumnName.Trim() == "ItemUOM" && dt.Columns[5].ColumnName.Trim() == "ItemRate" && dt.Columns[6].ColumnName.Trim() == "ItemDescription")
                                 {
                                     // Method 1: delete data from Temp Table
@@ -1487,14 +1489,17 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
                     try
                     {
+                        string estimateNo_New = GetEstimateNo(con, transaction);
+
                         // inserting header
-                        InserTendorItems(con, transaction);
+                        InsertTenderEstimation(con, transaction, estimateNo_New);
+
+                        // inserting item details
+                        InserTendorItems(con, transaction, estimateNo_New);
 
                         if (transaction.Connection != null) transaction.Commit();
 
-                        string estimateNo = Session["EstimateNo"].ToString();
-
-                        getSweetAlertSuccessRedirectMandatory("Success!", $"The Tendor Estimation: {estimateNo} Successfully Created", "TenderEstimation.aspx");
+                        getSweetAlertSuccessRedirectMandatory("Success!", $"The Tendor Estimation: {estimateNo_New} Successfully Created", "TenderEstimation.aspx");
                     }
                     catch (Exception ex)
                     {
@@ -1521,17 +1526,34 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
 
 
+    private void InsertTenderEstimation(SqlConnection con, SqlTransaction transaction, string estimateNo)
+    {
+        string userID = Session["UserId"].ToString();
 
-    private void InserTendorItems(SqlConnection con, SqlTransaction transaction)
+        DateTime estimationDate = DateTime.Parse(EstimateDate.Text);
+        decimal basicAmount = Convert.ToDecimal(BasicAmount.Text);
+
+        string sql = $@"Insert Into TenderEstimation757 
+                        (RefNo, EstimateNo, EstimateDate, BasicAmount, SaveBy) 
+                        values 
+                        (@RefNo, @EstimateNo, @EstimateDate, @BasicAmount, @SaveBy)";
+
+        SqlCommand cmd = new SqlCommand(sql, con, transaction);
+        cmd.Parameters.AddWithValue("@RefNo", estimateNo);
+        cmd.Parameters.AddWithValue("@EstimateNo", estimateNo);
+        cmd.Parameters.AddWithValue("@EstimateDate", estimationDate);
+        cmd.Parameters.AddWithValue("@BasicAmount", basicAmount);
+        cmd.Parameters.AddWithValue("@SaveBy", userID);
+        cmd.ExecuteNonQuery();
+    }
+
+    private void InserTendorItems(SqlConnection con, SqlTransaction transaction, string estimateNo)
     {
         DataTable dt = (DataTable)Session["ItemDetails"];
 
         if (dt.Rows.Count > 0)
         {
             string userID = Session["UserId"].ToString();
-
-            string estimateNo = GetEstimateNo(con, transaction);
-            Session["EstimateNo"] = estimateNo;
 
             decimal basicAmount = Convert.ToDecimal(BasicAmount.Text);
 
@@ -1556,22 +1578,25 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                     TextBox ItemRateTxt = (TextBox)itemGrid.Rows[rowIndex].FindControl("ItemRate");
                     decimal itemRate = Convert.ToDecimal(ItemRateTxt.Text);
 
+                    TextBox ItemSubTotalTxt = (TextBox)itemGrid.Rows[rowIndex].FindControl("ItemSubTotal");
+                    decimal itemSubTotal = Convert.ToDecimal(ItemSubTotalTxt.Text);
+
                     // new item refernennce no
                     string itemRefNo_New = GetTendorItemsRefNo(con, transaction);
 
                     if (row["DataEntryMode"].ToString().ToUpper().Trim() == "EXCEL".ToUpper().Trim())
                     {
                         // fetching existing refids for following fields
-                        string itemCategoryId = GetReferenceId_ItemCategory(con, transaction, row["ItemCategory"].ToString());
-                        string itemSubCategoryId = GetReferenceId_ItemSubCategory(con, transaction, row["ItemSubCategory"].ToString(), itemCategoryId);
-                        string itemUomId = GetReferenceId_UOM(con, transaction, row["ItemUOM"].ToString());
-                        string itemId = GetReferenceId_ItemMaster(con, transaction, row["ItemName"].ToString(), itemCategoryId, itemSubCategoryId, itemUomId);
+                        string itemCategoryId = GetReferenceId_ItemCategory(con, transaction, row["ItemCategoryText"].ToString());
+                        string itemSubCategoryId = GetReferenceId_ItemSubCategory(con, transaction, row["ItemSubCategoryText"].ToString(), itemCategoryId);
+                        string itemUomId = GetReferenceId_UOM(con, transaction, row["ItemUOMText"].ToString());
+                        string itemId = GetReferenceId_ItemMaster(con, transaction, row["ItemNameText"].ToString(), itemCategoryId, itemSubCategoryId, itemUomId);
 
                         //excel entry
                         string sql = $@"insert into TenderBOM757 
-                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, AoTotalQty, AoBalanceQty, TendorQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
+                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, AoTotalQty, AoBalanceQty, TenderQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
                                         values 
-                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @AoTotalQty, @AoBalanceQty, @TendorQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
+                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @AoTotalQty, @AoBalanceQty, @TenderQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
 
                         SqlCommand cmd = new SqlCommand(sql, con, transaction);
                         cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
@@ -1582,10 +1607,10 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                         cmd.Parameters.AddWithValue("@ItemName", itemId);
                         cmd.Parameters.AddWithValue("@AoTotalQty", row["AoTotalQty"]);
                         cmd.Parameters.AddWithValue("@AoBalanceQty", row["AoBalanceQty"]);
-                        cmd.Parameters.AddWithValue("@TendorQuantity", tenderQty);
+                        cmd.Parameters.AddWithValue("@TenderQuantity", tenderQty);
                         cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
                         cmd.Parameters.AddWithValue("@ItemRate", itemRate);
-                        cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                        cmd.Parameters.AddWithValue("@ItemSubTotal", itemSubTotal);
                         cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
                         cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
                         cmd.Parameters.AddWithValue("@BasicAmount", basicAmount);
@@ -1612,7 +1637,7 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                         cmd.Parameters.AddWithValue("@TenderQuantity", tenderQty);
                         cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
                         cmd.Parameters.AddWithValue("@ItemRate", itemRate);
-                        cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                        cmd.Parameters.AddWithValue("@ItemSubTotal", itemSubTotal);
                         cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
                         cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
                         cmd.Parameters.AddWithValue("@BasicAmount", basicAmount);

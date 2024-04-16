@@ -26,6 +26,7 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
             {
                 // searcha DD
                 EstimateNo_Bind_Dropdown();
+                Verification_DropDown();
             }
         }
         else
@@ -235,6 +236,31 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
         }
     }
 
+    private void Verification_DropDown()
+    {
+        string userID = Session["UserId"].ToString();
+
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = "select * from VerificationStatus757";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            //cmd.Parameters.AddWithValue("@SaveBy", userID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            VerificationStatus.DataSource = dt;
+            VerificationStatus.DataTextField = "VerificationText";
+            VerificationStatus.DataValueField = "VerificationValue";
+            VerificationStatus.DataBind();
+            VerificationStatus.Items.Insert(0, new ListItem("------Select Verification Status------", "0"));
+        }
+    }
+
 
 
     //=========================={ Fetch Data }==========================
@@ -340,34 +366,30 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
         {
             connection.Open();
 
-            string sql = $@"WITH NumberedRows AS (
-                                SELECT EstimateNo, EstimateDate, Concat(N'₹ ', (Format(BasicAmount, 'N', 'en-IN'))) as BasicAmount, 
-                                Case When (select count(*) from EstimateVerification757 as est where est.EstimateNo = tb.EstimateNo) > 0 
-                                Then 'Verified' Else 'Pending' end as EstimateVerified, 
-	                            (select count(*) from TenderBOM757 as tb Where tb.EstimateNo = '{estimateNo}' AND tb.DeleteFlag IS NULL) as ItemCount, 
-                                ROW_NUMBER() OVER (PARTITION BY EstimateNo ORDER BY EstimateNo) AS RowNum 
-                                FROM TenderBOM757 as tb 
-                            )
-                            SELECT * 
-                            FROM NumberedRows
+            string sql = $@"SELECT te.EstimateNo, te.EstimateDate, Concat(N'₹ ', (Format(te.BasicAmount, 'N', 'en-IN'))) as BasicAmount, 
+                            (select count(*) from TenderBOM757 as tb Where tb.EstimateNo = te.EstimateNo AND tb.DeleteFlag IS NULL) as ItemCount, 
+                            Case When (select count(*) from EstimateVerification757 as est where est.EstimateNo = te.EstimateNo) > 0 
+                            Then 'Verified' Else 'Pending' end as EstimateVerified 
+                            FROM TenderEstimation757 as te 
+                            left join EstimateVerification757 as est on est.EstimateNo = te.EstimateNo 
                             WHERE 1=1";
 
             if (!string.IsNullOrEmpty(estimateNo))
             {
-                sql += " AND EstimateNo = @EstimateNo";
+                sql += " AND te.EstimateNo = @EstimateNo";
             }
 
             if (fromDate != null)
             {
-                sql += " AND EstimateDate >= @FromDate";
+                sql += " AND te.EstimateDate >= @FromDate";
             }
 
             if (toDate != null)
             {
-                sql += " AND EstimateDate <= @ToDate";
+                sql += " AND te.EstimateDate <= @ToDate";
             }
-            
-            sql += " AND RowNum = 1 ORDER BY EstimateNo DESC";
+
+            sql += " ORDER BY te.EstimateNo DESC";
             //sql += " AND aa.RefNo=@AANumber ORDER BY RefNo DESC";
 
 
@@ -447,12 +469,6 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
             ad.Fill(dt);
             con.Close();
 
-            //ApprovalStatus.DataSource = dt;
-            //ApprovalStatus.DataTextField = "AAnoTitle";
-            //ApprovalStatus.DataValueField = "VerificationStatus";
-            //ApprovalStatus.DataBind();
-            ApprovalStatus.Items.Insert(0, new ListItem("------Select Approval Status------", "0"));
-
             if (dt.Rows.Count > 0)
             {
                 Session["ExistingVerification"] = dt;
@@ -460,11 +476,11 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
                 VerificationRemark.Value = dt.Rows[0]["VerificationRemark"].ToString();
 
                 // clearing existing selections
-                ApprovalStatus.ClearSelection();
+                VerificationStatus.ClearSelection();
 
                 string verifyStatus = dt.Rows[0]["VerificationStatus"].ToString();
 
-                foreach (ListItem item in ApprovalStatus.Items)
+                foreach (ListItem item in VerificationStatus.Items)
                 {
                     if (item.Value == verifyStatus)
                     {
@@ -507,7 +523,7 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
             ad.Fill(dt);
             con.Close();
 
-            if(dt.Rows.Count > 0)
+            if (dt.Rows.Count > 0)
             {
                 EstimateNo.Text = dt.Rows[0]["EstimateNo"].ToString();
 
@@ -579,7 +595,7 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
                 {
                     DataTable exisintingVerificationDT = (DataTable)Session["ExistingVerification"];
 
-                    string approveStatus = ApprovalStatus.SelectedValue;
+                    string approveStatus = VerificationStatus.SelectedValue;
                     if (approveStatus == "TRUE")
                     {
                         UpdatingEstimateVerificationStatus(con, transaction);
@@ -625,7 +641,7 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
 
         if (dt.Rows.Count > 0)
         {
-            string approveStatus = ApprovalStatus.SelectedValue;
+            string approveStatus = VerificationStatus.SelectedValue;
 
 
             foreach (DataRow row in dt.Rows)
@@ -653,7 +669,7 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
         string refNo = exisintingVerificationDT.Rows[0]["RefNo"].ToString();
 
         string verifyRemark = VerificationRemark.Value;
-        string verifyStatus = ApprovalStatus.SelectedValue;
+        string verifyStatus = VerificationStatus.SelectedValue;
 
         string sql = $@"UPDATE EstimateVerification757 SET VerificationRemark=@VerificationRemark, VerificationStatus=@VerificationStatus 
                         Where RefNo=@RefNo";
@@ -682,7 +698,7 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
 
         string estimateNo = Session["EstimateNo"].ToString();
         string verifyRemark = VerificationRemark.Value;
-        string verifyStatus = ApprovalStatus.SelectedValue;
+        string verifyStatus = VerificationStatus.SelectedValue;
 
         string sql = $@"INSERT INTO EstimateVerification757  
                         (RefNo, EstimateNo, VerificationRemark, VerificationStatus, SaveBy) 
@@ -701,7 +717,7 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
         //DataTable dt = new DataTable();
         //ad.Fill(dt);
 
-        if (k > 0 && ApprovalStatus.SelectedValue == "TRUE")
+        if (k > 0 && VerificationStatus.SelectedValue == "TRUE")
         {
             getSweetAlertSuccessRedirectMandatory("Estimate Verification Done!", $"The Following Items Have Been Verified", "TenderEstimateVerification.aspx");
         }

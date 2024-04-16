@@ -261,11 +261,8 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
         using (SqlConnection con = new SqlConnection(connectionString))
         {
             con.Open();
-            string sqlxx = $@"select Distinct t.TenNo, t.RefID, CONCAT(t.TenNo, ' - ', t.TenTitle) as TendorNoTitle 
-                            from TenderDetails757 as t
-                            inner join TenderBOM757 as tb on tb.TendorRefNo = t.RefID";
 
-            string sql = $@"select Distinct EstimateNo from TenderBOM757";
+            string sql = $@"select * from TenderEstimation757";
 
             SqlCommand cmd = new SqlCommand(sql, con);
             cmd.ExecuteNonQuery();
@@ -561,32 +558,28 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
         {
             connection.Open();
 
-            string sql = $@"WITH NumberedRows AS (
-                                SELECT EstimateNo, EstimateDate, Concat(N'₹ ', (Format(BasicAmount, 'N', 'en-IN'))) as BasicAmount, 
-	                            (select count(*) from TenderBOM757 as tb Where EstimateNo = '{estimateNo}' AND tb.DeleteFlag IS NULL) as ItemCount, 
-                                ROW_NUMBER() OVER (PARTITION BY EstimateNo ORDER BY EstimateNo) AS RowNum 
-                                FROM TenderBOM757
-                            )
-                            SELECT * 
-                            FROM NumberedRows
-                            WHERE 1=1"; 
+            string sql = $@"SELECT te.EstimateNo, te.EstimateDate, Concat(N'₹ ', (Format(te.BasicAmount, 'N', 'en-IN'))) as BasicAmount, 
+                            (select count(*) from TenderBOM757 as tb Where tb.EstimateNo = te.EstimateNo AND tb.DeleteFlag IS NULL) as ItemCount, 
+                            Case When ((select VerificationStatus from EstimateVerification757 as ev where ev.EstimateNo = te.EstimateNo) = 'TRUE') Then 'Done' Else 'Pending' End As EstimateVerifyStatus
+                            FROM TenderEstimation757 as te 
+                            WHERE 1=1";
 
             if (!string.IsNullOrEmpty(estimateNo))
             {
-                sql += " AND EstimateNo = @EstimateNo";
+                sql += " AND te.EstimateNo = @EstimateNo";
             }
 
             if (fromDate != null)
             {
-                sql += " AND EstimateDate >= @FromDate";
+                sql += " AND te.EstimateDate >= @FromDate";
             }
 
             if (toDate != null)
             {
-                sql += " AND EstimateDate <= @ToDate";
+                sql += " AND te.EstimateDate <= @ToDate";
             }
 
-            sql += " AND RowNum = 1 ORDER BY EstimateNo DESC";
+            sql += " ORDER BY EstimateNo DESC";
             //sql += " AND aa.RefNo=@AANumber ORDER BY RefNo DESC";
 
 
@@ -1119,12 +1112,20 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                             {
                                 // Checking column names present in excel sheet or not
                                 if (dt.Columns[0].ColumnName.Trim() == "ItemCategory" && dt.Columns[1].ColumnName.Trim() == "ItemSubCategory" &&
-                                dt.Columns[2].ColumnName.Trim() == "ItemName" && dt.Columns[3].ColumnName.Trim() == "ReqBalanceQty" && dt.Columns[4].ColumnName.Trim() == "TendorQuantity"
-                                && dt.Columns[5].ColumnName.Trim() == "ItemUOM" && dt.Columns[6].ColumnName.Trim() == "ItemRate" && dt.Columns[7].ColumnName.Trim() == "ItemDescription")
+                                dt.Columns[2].ColumnName.Trim() == "ItemName" && dt.Columns[3].ColumnName.Trim() == "TenderQuantity"
+                                && dt.Columns[4].ColumnName.Trim() == "ItemUOM" && dt.Columns[5].ColumnName.Trim() == "ItemRate" && dt.Columns[6].ColumnName.Trim() == "ItemDescription")
                                 {
-
                                     // Method 1: delete data from Temp Table
                                     // Method 2: inserting data into temp table if needed
+
+                                    // removing empty records from excel DT data
+                                    for (int i = dt.Rows.Count - 1; i >= 0; i--)
+                                    {
+                                        if (string.IsNullOrWhiteSpace(dt.Rows[i]["ItemName"].ToString()))
+                                        {
+                                            dt.Rows.RemoveAt(i);
+                                        }
+                                    }
 
                                     InsertBOMToGrid(dt);
 
@@ -1152,48 +1153,116 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
     public void InsertBOMToGrid(DataTable dtItem)
     {
-        DataTable dt = ViewState["ItemDetails_VS"] as DataTable ?? createItemDatatable();
+        string itemNames = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemName")));
+        string itemCategories = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemCategory")));
+        string itemSubCategories = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemSubCategory")));
+        string itemUOM = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemUOM")));
+        string itemRate = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemRate")));
+        string itemDescriptions = string.Join(",", dtItem.AsEnumerable().Select(row => row.Field<string>("ItemDescription")));
 
-        foreach (DataRow row in dtItem.Rows)
+        using (SqlConnection con = new SqlConnection(connectionString))
         {
-            //int rowIndex = dt.Rows.IndexOf(row);
-            //dt.Rows.RemoveAt(rowIndex);
+            con.Open();
 
-            // checking if all fields in the row have data
-            if (row.ItemArray.All(field => !string.IsNullOrEmpty(field.ToString())))
+            string sql = "SP_TenderEstimation_ExcelUplod";
+
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@ItemNames", itemNames);
+            cmd.Parameters.AddWithValue("@ItemCategories", itemCategories);
+            cmd.Parameters.AddWithValue("@ItemSubCategories", itemSubCategories);
+            cmd.Parameters.AddWithValue("@ItemUOMs", itemUOM);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+
+            con.Close();
+
+            foreach (DataRow row in dt.Rows)
             {
-                string itemCategory = row["ItemCategory"].ToString();
-                string itemSubCategory = row["ItemSubCategory"].ToString();
-                string itemName = row["ItemName"].ToString();
-                double reqBalanceQty = Convert.ToDouble(row["ReqBalanceQty"]);
-                double tendorQuantity = Convert.ToDouble(row["TendorQuantity"].ToString());
-                string uom = row["ItemUOM"].ToString();
-                double itemRate = Convert.ToDouble(row["ItemRate"]);
-                string description = row["ItemDescription"].ToString();
+                int rowIndex = dt.Rows.IndexOf(row);
 
-                AddRowToItemDataTable(dt, itemCategory, itemSubCategory, itemName, reqBalanceQty, tendorQuantity, uom, itemRate, description, "EXCEL");
+                // attaching item rate and description dynamically to empty columns from SP resultset
+                if (row["ItemNameText"].ToString() == dtItem.Rows[rowIndex]["ItemName"].ToString())
+                {
+                    row["ItemRate"] = dtItem.Rows[rowIndex]["ItemRate"].ToString();
+                    row["ItemDescription"] = dtItem.Rows[rowIndex]["ItemDescription"].ToString();
+                }
             }
-        }
 
-        if (dt.Rows.Count > 0)
-        {
-            itemDiv.Visible = true;
+            // getting all items from result set from dt
+            HashSet<string> existingItemNames = new HashSet<string>(dt.AsEnumerable().Select(row => row.Field<string>("ItemNameText")));
 
-            if (!dt.Columns.Contains("CheckStatus"))
+            // iterating the result data to check if item exists or not
+            foreach (DataRow sourceRow in dtItem.Rows)
             {
-                // adding the new column with checkboxes
-                DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
-                checkboxColumn.DefaultValue = false;
-                dt.Columns.Add(checkboxColumn);
+                string sourceItemName = sourceRow.Field<string>("ItemName");
+
+                if (!existingItemNames.Contains(sourceItemName))
+                {
+                    DataRow newRow = dt.NewRow();
+
+                    newRow["ItemNameText"] = sourceItemName;
+                    newRow["ItemCategoryText"] = sourceRow.Field<string>("ItemCategory");
+                    newRow["ItemSubCategoryText"] = sourceRow.Field<string>("ItemSubCategory");
+                    newRow["ItemUOMText"] = sourceRow.Field<string>("ItemUOM");
+                    newRow["ItemRate"] = sourceRow.Field<string>("ItemRate");
+                    newRow["ItemDescription"] = sourceRow.Field<string>("ItemDescription");
+                    newRow["AoTotalQty"] = 0;
+                    newRow["AoBalanceQty"] = 0;
+
+                    dt.Rows.Add(newRow);
+                }
             }
 
-            itemGrid.DataSource = dt;
-            itemGrid.DataBind();
+            if (dt.Rows.Count > 0)
+            {
+                itemDiv.Visible = true;
 
-            ViewState["ItemDetails_VS"] = dt;
-            Session["ItemDetails"] = dt;
+                if (!dt.Columns.Contains("CheckStatus"))
+                {
+                    // adding the new column with checkboxes
+                    DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
+                    checkboxColumn.DefaultValue = false;
+                    dt.Columns.Add(checkboxColumn);
+                }
 
-            SheetName.Text = string.Empty;
+                if (!dt.Columns.Contains("TenderQuantity"))
+                {
+                    DataColumn TenderQuantity = new DataColumn("TenderQuantity", typeof(int));
+                    TenderQuantity.DefaultValue = 0;
+                    dt.Columns.Add(TenderQuantity);
+                }
+
+                if (!dt.Columns.Contains("ItemSubTotal"))
+                {
+                    DataColumn ItemSubTotal = new DataColumn("ItemSubTotal", typeof(int));
+                    ItemSubTotal.DefaultValue = 0;
+                    dt.Columns.Add(ItemSubTotal);
+                }
+
+                if (!dt.Columns.Contains("DataEntryMode"))
+                {
+                    DataColumn DataEntryMode = new DataColumn("DataEntryMode", typeof(string));
+                    DataEntryMode.DefaultValue = "EXCEL";
+                    dt.Columns.Add(DataEntryMode);
+                }
+
+                itemGrid.DataSource = dt;
+                itemGrid.DataBind();
+
+                // total item basic amount
+                //double? totalItemAMount = dt.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
+                //BasicAmount.Text = totalItemAMount.HasValue ? totalItemAMount.Value.ToString("N2") : "0.00";
+
+                ViewState["ItemDetails_VS"] = dt;
+                Session["ItemDetails"] = dt;
+
+                SheetName.Text = string.Empty;
+            }
         }
     }
 
@@ -1672,6 +1741,15 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                 // only checked items will be inserted
                 if (chkStatus != null && chkStatus.Checked)
                 {
+                    TextBox TenderQtyTxt = (TextBox)itemGrid.Rows[rowIndex].FindControl("TenderQuantity");
+                    decimal tenderQty = Convert.ToDecimal(TenderQtyTxt.Text);
+
+                    TextBox ItemRateTxt = (TextBox)itemGrid.Rows[rowIndex].FindControl("ItemRate");
+                    decimal itemRate = Convert.ToDecimal(ItemRateTxt.Text);
+
+                    TextBox ItemSubTotalTxt = (TextBox)itemGrid.Rows[rowIndex].FindControl("ItemSubTotal");
+                    decimal itemSubTotal = Convert.ToDecimal(ItemSubTotalTxt.Text);
+
                     // new item refernennce no
                     string itemRefNo_New = GetTendorItemsRefNo(con, transaction);
 
@@ -1687,9 +1765,9 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
 
                             //excel entry
                             string sql = $@"insert into TenderBOM757 
-                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, TendorQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
+                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, AoTotalQty, AoBalanceQty, TenderQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
                                         values 
-                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @TendorQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
+                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @AoTotalQty, @AoBalanceQty, @TenderQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
 
                             SqlCommand cmd = new SqlCommand(sql, con, transaction);
                             cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
@@ -1698,10 +1776,12 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                             cmd.Parameters.AddWithValue("@ItemCategory", itemCategoryId);
                             cmd.Parameters.AddWithValue("@ItemSubCategory", itemSubCategoryId);
                             cmd.Parameters.AddWithValue("@ItemName", itemId);
-                            cmd.Parameters.AddWithValue("@TendorQuantity", row["TendorQuantity"]);
+                            cmd.Parameters.AddWithValue("@AoTotalQty", row["AoTotalQty"]);
+                            cmd.Parameters.AddWithValue("@AoBalanceQty", row["AoBalanceQty"]);
+                            cmd.Parameters.AddWithValue("@TenderQuantity", tenderQty);
                             cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
-                            cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
-                            cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                            cmd.Parameters.AddWithValue("@ItemRate", itemRate);
+                            cmd.Parameters.AddWithValue("@ItemSubTotal", itemSubTotal);
                             cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
                             cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
                             cmd.Parameters.AddWithValue("@BasicAmount", basicAmount);
@@ -1712,9 +1792,9 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                         {
                             // manual entry OR A.A. items (existing items)
                             string sql = $@"insert into TenderBOM757 
-                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, TendorQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
+                                        (RefNo, EstimateNo, EstimateDate, ItemCategory, ItemSubCategory, ItemName, AoTotalQty, AoBalanceQty, TenderQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BasicAmount, SaveBy) 
                                         values 
-                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @TendorQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
+                                        (@RefNo, @EstimateNo, @EstimateDate, @ItemCategory, @ItemSubCategory, @ItemName, @AoTotalQty, @AoBalanceQty, @TenderQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BasicAmount, @SaveBy)";
 
                             SqlCommand cmd = new SqlCommand(sql, con, transaction);
                             cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
@@ -1723,10 +1803,12 @@ public partial class Tendor_BOM_TendorBOM : System.Web.UI.Page
                             cmd.Parameters.AddWithValue("@ItemCategory", row["ItemCategory"]);
                             cmd.Parameters.AddWithValue("@ItemSubCategory", row["ItemSubCategory"]);
                             cmd.Parameters.AddWithValue("@ItemName", row["ItemName"]);
-                            cmd.Parameters.AddWithValue("@TendorQuantity", row["TendorQuantity"]);
+                            cmd.Parameters.AddWithValue("@AoTotalQty", row["AoTotalQty"]);
+                            cmd.Parameters.AddWithValue("@AoBalanceQty", row["AoBalanceQty"]);
+                            cmd.Parameters.AddWithValue("@TenderQuantity", tenderQty);
                             cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
-                            cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
-                            cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                            cmd.Parameters.AddWithValue("@ItemRate", itemRate);
+                            cmd.Parameters.AddWithValue("@ItemSubTotal", itemSubTotal);
                             cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
                             cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
                             cmd.Parameters.AddWithValue("@BasicAmount", basicAmount);

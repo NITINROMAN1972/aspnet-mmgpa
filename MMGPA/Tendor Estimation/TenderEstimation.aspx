@@ -59,7 +59,7 @@
                 <div class="justify-content-end d-flex px-0 text-body-secondary mb-0 mt-4">
                     <div class="col-md-6 px-0">
                         <div class="fw-semibold fs-3 text-dark">
-                            <asp:Literal ID="Literal14" Text="Estimation Estimation" runat="server"></asp:Literal>
+                            <asp:Literal ID="Literal14" Text="Tender Estimation" runat="server"></asp:Literal>
                         </div>
                     </div>
                     <div class="col-md-6 text-end px-0">
@@ -84,7 +84,7 @@
                                     <!-- Search DD - Estimate No -->
                                     <div class="col-md-4 align-self-end">
                                         <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                            <asp:Literal ID="Literal15" Text="" runat="server">Tender Estimate</asp:Literal>
+                                            <asp:Literal ID="Literal15" Text="" runat="server">Estimate Number</asp:Literal>
                                         </div>
                                         <asp:DropDownList ID="ddScEstimateNo" runat="server" AutoPostBack="false" class="form-control is-invalid" CssClass=""></asp:DropDownList>
                                     </div>
@@ -144,6 +144,7 @@
                                     <asp:BoundField DataField="EstimateDate" HeaderText="Estimation Date" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" DataFormatString="{0:dd/MM/yyyy}" />
                                     <asp:BoundField DataField="BasicAmount" HeaderText="Total Amount" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
                                     <asp:BoundField DataField="ItemCount" HeaderText="Item Count" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
+                                    <asp:BoundField DataField="EstimateVerifyStatus" HeaderText="Verification Status" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
 
                                     <asp:TemplateField HeaderText="Update" ItemStyle-CssClass="align-middle">
                                         <ItemTemplate>

@@ -248,9 +248,9 @@
                                 <asp:BoundField DataField="ItemCategoryText" HeaderText="Item Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemSubCategoryText" HeaderText="Item Sub Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemNameText" HeaderText="Item Name" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                <asp:BoundField DataField="TendorQuantity" HeaderText="Item Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                <asp:BoundField DataField="TenderQuantity" HeaderText="Item Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemUOMText" HeaderText="UOM" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                <asp:BoundField DataField="ItemRate" HeaderText="Rate/Unit" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                <asp:BoundField DataField="ItemRate" HeaderText="Rate" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemSubTotal" HeaderText="Item Sub Total" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                 <asp:BoundField DataField="ItemDescription" HeaderText="Description" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                             </Columns>
@@ -265,15 +265,12 @@
                         <!-- AA No & Title -->
                         <div class="col-md-6 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                <asp:Literal ID="Literal1" Text="" runat="server">Approval Status <em style="color: red">*</em></asp:Literal>
+                                <asp:Literal ID="Literal1" Text="" runat="server">Verification Status <em style="color: red">*</em></asp:Literal>
                                 <div>
-                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" ControlToValidate="ApprovalStatus" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select approval status" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" ControlToValidate="VerificationStatus" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select verification status" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                 </div>
                             </div>
-                            <asp:DropDownList ID="ApprovalStatus" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass="">
-                                <asp:ListItem Text="Approved" Value="TRUE"></asp:ListItem>
-                                <asp:ListItem Text="Not Approved" Value="FALSE"></asp:ListItem>
-                            </asp:DropDownList>
+                            <asp:DropDownList ID="VerificationStatus" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
                         </div>
 
                     </div>

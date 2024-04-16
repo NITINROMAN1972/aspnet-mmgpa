@@ -1,14 +1,28 @@
 ﻿
 $(document).ready(function () {
 
-    // purchase order number & title
-    $('#PoNo').select2({
+    // search purchase
+    $('#ddScPoNo').select2({
         theme: 'classic',
         placeholder: 'Select here.....',
         allowClear: false,
     });
 
-    // administrative number & title
+    // tender number
+    $('#TenderNoNTitle').select2({
+        theme: 'classic',
+        placeholder: 'Select here.....',
+        allowClear: false,
+    });
+
+    // vender number
+    $('#VenderName').select2({
+        theme: 'classic',
+        placeholder: 'Select here.....',
+        allowClear: false,
+    });
+
+    // item category
     $('#ItemCategory').select2({
         theme: 'classic',
         placeholder: 'Select here.....',
@@ -22,26 +36,23 @@ $(document).ready(function () {
         allowClear: false,
     });
 
-    // item
+    // item name
     $('#ItemName').select2({
         theme: 'classic',
         placeholder: 'Select here.....',
         allowClear: false,
     });
 
-    // item uom
+    // uom
     $('#ItemUOM').select2({
         theme: 'classic',
         placeholder: 'Select here.....',
         allowClear: false,
     });
 
-    //______Search DD______________
-    $('#ddScPoNo').select2({
-        theme: 'classic',
-        placeholder: 'Select here.....',
-        allowClear: false,
-    });
+
+
+    
 
 
 
@@ -94,14 +105,21 @@ $(document).ready(function () {
 
         setTimeout(function () {
 
-            // tendor number & title
-            $('#PoNo').select2({
+            // tender number
+            $('#TenderNoNTitle').select2({
                 theme: 'classic',
                 placeholder: 'Select here.....',
                 allowClear: false,
             });
 
-            // administrative number & title
+            // vender number
+            $('#VenderName').select2({
+                theme: 'classic',
+                placeholder: 'Select here.....',
+                allowClear: false,
+            });
+
+            // item category
             $('#ItemCategory').select2({
                 theme: 'classic',
                 placeholder: 'Select here.....',
@@ -115,27 +133,19 @@ $(document).ready(function () {
                 allowClear: false,
             });
 
-            // item
+            // item name
             $('#ItemName').select2({
                 theme: 'classic',
                 placeholder: 'Select here.....',
                 allowClear: false,
             });
 
-            // item uom
+            // uom
             $('#ItemUOM').select2({
                 theme: 'classic',
                 placeholder: 'Select here.....',
                 allowClear: false,
             });
-
-            //______Search DD______________
-            $('#ddScPoNo').select2({
-                theme: 'classic',
-                placeholder: 'Select here.....',
-                allowClear: false,
-            });
-
 
         }, 0);
     });

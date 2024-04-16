@@ -1100,74 +1100,76 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
                 // checking if all fields in the row have data
                 if (row.ItemArray.All(field => !string.IsNullOrEmpty(field.ToString())))
                 {
-                    // only checked items will be inserted
-                    if (chkStatus != null && chkStatus.Checked)
+                    
+                }
+
+                // only checked items will be inserted
+                if (chkStatus != null && chkStatus.Checked)
+                {
+                    // new item refernennce no
+                    string itemRefNo_New = GetAAItemsRefNo(con, transaction);
+
+                    //if (excelRadio.Checked) // mapping refids from text values
+
+
+                    if (row["DataEntryMode"].ToString().ToUpper().Trim() == "EXCEL".ToUpper().Trim())
                     {
-                        // new item refernennce no
-                        string itemRefNo_New = GetAAItemsRefNo(con, transaction);
+                        // fetching existing refids for following fields
+                        string itemCategoryId = GetReferenceId_ItemCategory(con, transaction, row["ItemCategory"].ToString());
+                        string itemSubCategoryId = GetReferenceId_ItemSubCategory(con, transaction, row["ItemSubCategory"].ToString(), itemCategoryId);
+                        string itemUomId = GetReferenceId_UOM(con, transaction, row["ItemUOM"].ToString());
+                        string itemId = GetReferenceId_ItemMaster(con, transaction, row["ItemName"].ToString(), itemCategoryId, itemSubCategoryId, itemUomId);
 
-                        //if (excelRadio.Checked) // mapping refids from text values
-
-
-                        if (row["DataEntryMode"].ToString().ToUpper().Trim() == "EXCEL".ToUpper().Trim())
-                        {
-                            // fetching existing refids for following fields
-                            string itemCategoryId = GetReferenceId_ItemCategory(con, transaction, row["ItemCategory"].ToString());
-                            string itemSubCategoryId = GetReferenceId_ItemSubCategory(con, transaction, row["ItemSubCategory"].ToString(), itemCategoryId);
-                            string itemUomId = GetReferenceId_UOM(con, transaction, row["ItemUOM"].ToString());
-                            string itemId = GetReferenceId_ItemMaster(con, transaction, row["ItemName"].ToString(), itemCategoryId, itemSubCategoryId, itemUomId);
-
-                            //excel entry
-                            string sql = $@"insert into AAItem757 
+                        //excel entry
+                        string sql = $@"insert into AAItem757 
                                         (RefNo, AARefNo, ItemCategory, ItemSubCategory, ItemName, ItemCode, ItemQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, SaveBy) 
                                         values 
                                         (@RefNo, @AARefNo, @ItemCategory, @ItemSubCategory, @ItemName, @ItemCode, @ItemQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @SaveBy)";
 
-                            SqlCommand cmd = new SqlCommand(sql, con, transaction);
-                            cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
-                            cmd.Parameters.AddWithValue("@AARefNo", adminApproveRefNo);
-                            cmd.Parameters.AddWithValue("@ItemCategory", itemCategoryId);
-                            cmd.Parameters.AddWithValue("@ItemSubCategory", itemSubCategoryId);
-                            cmd.Parameters.AddWithValue("@ItemName", itemId);
-                            cmd.Parameters.AddWithValue("@ItemCode", row["ItemCode"]);
-                            cmd.Parameters.AddWithValue("@ItemQuantity", row["ItemQuantity"]);
-                            cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
-                            cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
-                            cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
-                            cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
-                            cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
-                            cmd.Parameters.AddWithValue("@SaveBy", userID);
-                            cmd.ExecuteNonQuery();
-                        }
-                        else
-                        {
-                            // manual entry
-                            string sql = $@"insert into AAItem757 
+                        SqlCommand cmd = new SqlCommand(sql, con, transaction);
+                        cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
+                        cmd.Parameters.AddWithValue("@AARefNo", adminApproveRefNo);
+                        cmd.Parameters.AddWithValue("@ItemCategory", itemCategoryId);
+                        cmd.Parameters.AddWithValue("@ItemSubCategory", itemSubCategoryId);
+                        cmd.Parameters.AddWithValue("@ItemName", itemId);
+                        cmd.Parameters.AddWithValue("@ItemCode", row["ItemCode"]);
+                        cmd.Parameters.AddWithValue("@ItemQuantity", row["ItemQuantity"]);
+                        cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
+                        cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
+                        cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                        cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
+                        cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
+                        cmd.Parameters.AddWithValue("@SaveBy", userID);
+                        cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        // manual entry
+                        string sql = $@"insert into AAItem757 
                                         (RefNo, AARefNo, ItemCategory, ItemSubCategory, ItemName, ItemCode, ItemQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, SaveBy) 
                                         values 
                                         (@RefNo, @AARefNo, @ItemCategory, @ItemSubCategory, @ItemName, @ItemCode, @ItemQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @SaveBy)";
 
-                            SqlCommand cmd = new SqlCommand(sql, con, transaction);
-                            cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
-                            cmd.Parameters.AddWithValue("@AARefNo", adminApproveRefNo);
-                            cmd.Parameters.AddWithValue("@ItemCategory", row["ItemCategory"]);
-                            cmd.Parameters.AddWithValue("@ItemSubCategory", row["ItemSubCategory"]);
-                            cmd.Parameters.AddWithValue("@ItemName", row["ItemName"]);
-                            cmd.Parameters.AddWithValue("@ItemCode", row["ItemCode"]);
-                            cmd.Parameters.AddWithValue("@ItemQuantity", row["ItemQuantity"]);
-                            cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
-                            cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
-                            cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
-                            cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
-                            cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
-                            cmd.Parameters.AddWithValue("@SaveBy", userID);
-                            cmd.ExecuteNonQuery();
+                        SqlCommand cmd = new SqlCommand(sql, con, transaction);
+                        cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
+                        cmd.Parameters.AddWithValue("@AARefNo", adminApproveRefNo);
+                        cmd.Parameters.AddWithValue("@ItemCategory", row["ItemCategory"]);
+                        cmd.Parameters.AddWithValue("@ItemSubCategory", row["ItemSubCategory"]);
+                        cmd.Parameters.AddWithValue("@ItemName", row["ItemName"]);
+                        cmd.Parameters.AddWithValue("@ItemCode", row["ItemCode"]);
+                        cmd.Parameters.AddWithValue("@ItemQuantity", row["ItemQuantity"]);
+                        cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
+                        cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
+                        cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                        cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
+                        cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
+                        cmd.Parameters.AddWithValue("@SaveBy", userID);
+                        cmd.ExecuteNonQuery();
 
 
-                            //SqlDataAdapter ad = new SqlDataAdapter(cmd);
-                            //DataTable dt = new DataTable();
-                            //ad.Fill(dt);
-                        }
+                        //SqlDataAdapter ad = new SqlDataAdapter(cmd);
+                        //DataTable dt = new DataTable();
+                        //ad.Fill(dt);
                     }
                 }
             }

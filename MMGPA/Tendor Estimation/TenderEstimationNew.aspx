@@ -325,7 +325,7 @@
                                         </div>
                                         <div class="input-group has-validation">
                                             <h6 class="fw-semibold fs-6 text-dark-subtle align-self-end">
-                                                <asp:LinkButton ID="btnSample" OnClick="btnSample_Click" runat="server" CssClass="btn btn-success shadow">Tendor_BOM.xlsx</asp:LinkButton>
+                                                <asp:LinkButton ID="btnSample" OnClick="btnSample_Click" runat="server" CssClass="btn btn-success shadow">Tender_BOM.xlsx</asp:LinkButton>
                                             </h6>
                                         </div>
                                     </div>

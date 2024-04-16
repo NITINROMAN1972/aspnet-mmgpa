@@ -19,7 +19,7 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
         // Project: MMGPA
         // Code: 757
 
-        Session["UserId"] = "10223"; // client - milind
+        //Session["UserId"] = "10223"; // client - milind
 
         if (Session["UserId"] != null)
         {
@@ -27,12 +27,17 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
             {
                 Page.Form.Attributes.Add("enctype", "multipart/form-data");
 
-                PoNoAndTitle_DropDown();
+                Tender_Estimation_NoAndTitle_DropDown();
+                Vender_Name_DropDown();
+
                 ItemCategory_DropDown();
                 UnitOfMeasurement_DropDown();
 
-                // initially manual entry option
-                itemEnterManualDiv.Visible = true;
+                DateTime poDate = DateTime.Now;
+                PODate.Text = poDate.ToString("yyyy-MM-dd");
+
+                DateTime estimateDate = DateTime.Now;
+                EstimationDate.Text = estimateDate.ToString("yyyy-MM-dd");
             }
         }
         else
@@ -232,14 +237,16 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
 
     //=========================={ Binding Dropdowns }==========================
 
-    private void PoNoAndTitle_DropDown()
+    private void Tender_Estimation_NoAndTitle_DropDown()
     {
         string userID = Session["UserId"].ToString();
 
         using (SqlConnection con = new SqlConnection(connectionString))
         {
             con.Open();
-            string sql = "select * from PoDetails757";
+            string sql = $@"select td.RefID, ev.EstimateNo, td.TenNo, td.TenDate, CONCAT(td.TenNo, ' - ', td.TenTitle) as TenderNoNTitle
+                            from TenderDetails757 as td 
+                            inner join EstimateVerification757 ev on ev.EstimateNo = td.EstimatNo";
             SqlCommand cmd = new SqlCommand(sql, con);
             //cmd.Parameters.AddWithValue("@SaveBy", userID);
             cmd.ExecuteNonQuery();
@@ -249,11 +256,36 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
             ad.Fill(dt);
             con.Close();
 
-            PoNo.DataSource = dt;
-            PoNo.DataTextField = "PoNo";
-            PoNo.DataValueField = "RefID";
-            PoNo.DataBind();
-            PoNo.Items.Insert(0, new ListItem("------Select P.O. No.------", "0"));
+            TenderNoNTitle.DataSource = dt;
+            TenderNoNTitle.DataTextField = "TenderNoNTitle";
+            TenderNoNTitle.DataValueField = "EstimateNo";
+            TenderNoNTitle.DataBind();
+            TenderNoNTitle.Items.Insert(0, new ListItem("------Select Tender Number & Title------", "0"));
+        }
+    }
+
+    private void Vender_Name_DropDown()
+    {
+        string userID = Session["UserId"].ToString();
+
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = $@"select * from VendorMaster757";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            //cmd.Parameters.AddWithValue("@SaveBy", userID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            VenderName.DataSource = dt;
+            VenderName.DataTextField = "VendorName";
+            VenderName.DataValueField = "RefID";
+            VenderName.DataBind();
+            VenderName.Items.Insert(0, new ListItem("------Select Vendor Name------", "0"));
         }
     }
 
@@ -359,6 +391,106 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
 
     //=========================={ Drop Down Event }==========================
 
+    protected void TenderNoNTitle_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string estimationNo = TenderNoNTitle.SelectedValue;
+
+        if (TenderNoNTitle.SelectedValue != "0")
+        {
+            // fill header
+            EstimationDetails_Bind_Dropdown(estimationNo); 
+            // fill details
+            EstimationItems_Bind_Dropdown(estimationNo);
+        }
+        else
+        {
+            EstimationNo.Text = string.Empty;
+            EstimationDate.Text = string.Empty;
+
+            itemDiv.Visible = false;
+
+            itemGrid.DataSource = null;
+            itemGrid.DataBind();
+
+            ViewState["ItemDetails_VS"] = null;
+            Session["ItemDetails"] = null;
+        }
+    }
+
+    private void EstimationDetails_Bind_Dropdown(string estimationNo)
+    {
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = $@"select distinct EstimateNo, EstimateDate from TenderBOM757 where EstimateNo = @EstimateNo";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@EstimateNo", estimationNo);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            if (dt.Rows.Count > 0)
+            {
+                EstimationNo.Text = dt.Rows[0]["EstimateNo"].ToString();
+
+                DateTime estimateDate = DateTime.Parse(dt.Rows[0]["EstimateDate"].ToString());
+                EstimationDate.Text = estimateDate.ToString("yyyy-MM-dd");
+            }
+        }
+    }
+
+    private void EstimationItems_Bind_Dropdown(string estimationNo)
+    {
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = $@"select distinct tb.*, cat.CategoryName as ItemCategoryText, subcat.SubCategory as ItemSubCategoryText, 
+                            item.ItemName as ItemNameText, uom.UnitName as ItemUOMText, tb.TenderQuantity as PoQuantity 
+                            from TenderBOM757 as td
+                            inner join TenderBOM757 as tb on tb.EstimateNo = td.EstimateNo 
+                            inner join ItemCategory757 as cat on cat.RefID = tb.ItemCategory 
+                            inner join ItemSubCategory757 as subcat on subcat.RefID = tb.ItemSubCategory 
+                            inner join UnitOfMeasurement757 as uom on uom.RefID = tb.ItemUOM 
+                            inner join ItemMaster757 as item on item.RefID = tb.ItemName
+                            where td.EstimateNo = @EstimateNo";
+
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@EstimateNo", estimationNo);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            if (dt.Rows.Count > 0)
+            {
+                itemDiv.Visible = true;
+
+                itemGrid.DataSource = dt;
+                itemGrid.DataBind();
+
+                ViewState["ItemDetails_VS"] = dt;
+                Session["ItemDetails"] = dt;
+
+                // total item basic amount
+                double? totalItemAMount = dt.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
+                BasicAmount.Text = totalItemAMount.HasValue ? totalItemAMount.Value.ToString("N2") : "0.00";
+
+                Session["TotalBillAmount"] = totalItemAMount;
+
+                // recalculating tax head
+                FillTaxHead();
+            }
+        }
+    }
+
+
+
+
     protected void ItemCategory_SelectedIndexChanged(object sender, EventArgs e)
     {
         string itemCategoryID = ItemCategory.SelectedValue;
@@ -375,6 +507,8 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
 
             ItemName.Items.Clear();
             ItemName.Items.Insert(0, new ListItem("------Select Item------", "0"));
+
+            ItemUOM.ClearSelection();
         }
     }
 
@@ -391,8 +525,65 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
             // clearing the items in the dropdown
             ItemName.Items.Clear();
             ItemName.Items.Insert(0, new ListItem("------Select Item------", "0"));
+
+            ItemUOM.ClearSelection();
         }
     }
+
+
+
+
+    protected void ItemName_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string itemRefID = ItemName.SelectedValue;
+
+        if (ItemName.SelectedValue != "0")
+        {
+            BindItemDetails(itemRefID);
+        }
+        else
+        {
+            ItemUOM.ClearSelection();
+        }
+    }
+
+    private void BindItemDetails(string itemRefID)
+    {
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = $@"select im.ItemCode, im.UMO, uom.UnitName
+                            from ItemMaster757 as im 
+                            left join UnitOfMeasurement757 as uom on uom.RefID = im.UMO 
+                            Where im.RefID = @RefID";
+
+            SqlCommand cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@RefID", itemRefID);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            ItemUOM.ClearSelection();
+
+            string itemUOMRefID = dt.Rows[0]["UMO"].ToString();
+
+            foreach (ListItem item in ItemUOM.Items)
+            {
+                if (item.Value == itemUOMRefID)
+                {
+                    item.Selected = true;
+                    break;
+                }
+            }
+        }
+    }
+
+
+
+
 
 
 
@@ -410,11 +601,33 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
         itemEnterManualDiv.Visible = false;
     }
 
+    protected void EstimateRadio_CheckedChanged(object sender, EventArgs e)
+    {
+        excelUploadDiv.Visible = false;
+        itemEnterManualDiv.Visible = false;
+    }
+
 
 
 
 
     //=========================={ Fetch Data }==========================
+
+    private string GetNewPOReferenceNo(SqlConnection con, SqlTransaction transaction)
+    {
+        string nextRefNo = "1000001";
+
+        string sql = "SELECT ISNULL(MAX(CAST(RefID AS INT)), 1000000) + 1 AS NextRefNo FROM PoDetails757";
+        SqlCommand cmd = new SqlCommand(sql, con, transaction);
+
+        SqlDataAdapter ad = new SqlDataAdapter(cmd);
+        DataTable dt = new DataTable();
+        ad.Fill(dt);
+
+        if (dt.Rows.Count > 0) return dt.Rows[0]["NextRefNo"].ToString();
+        else return nextRefNo;
+    }
+
     private string GetPoItemsRefNo(SqlConnection con, SqlTransaction transaction)
     {
         string nextRefNo = "1000001";
@@ -428,6 +641,109 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
 
         if (dt.Rows.Count > 0) return dt.Rows[0]["NextRefNo"].ToString();
         else return nextRefNo;
+    }
+
+    private DataTable getAccountHeadNew()
+    {
+        using (SqlConnection con = new SqlConnection(connectionString))
+        {
+            con.Open();
+            string sql = "select * from GLAccounts757 where GLGroupName = '1000005' AND IsTaxApplied = '1000001'";
+            SqlCommand cmd = new SqlCommand(sql, con);
+            //cmd.Parameters.AddWithValue("@WorkOrderRefNo", workOrderRefNo);
+            cmd.ExecuteNonQuery();
+
+            SqlDataAdapter ad = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            ad.Fill(dt);
+            con.Close();
+
+            return dt;
+        }
+    }
+
+    private string GetNewGLTaxRefNo(SqlConnection con, SqlTransaction transaction)
+    {
+        string nextRefNo = "1000001";
+
+        string sql = "SELECT ISNULL(MAX(CAST(RefNo AS INT)), 1000000) + 1 AS NextRefNo FROM PurchaseOrderTax757";
+        SqlCommand cmd = new SqlCommand(sql, con, transaction);
+
+        SqlDataAdapter ad = new SqlDataAdapter(cmd);
+        DataTable dt = new DataTable();
+        ad.Fill(dt);
+
+        if (dt.Rows.Count > 0) return dt.Rows[0]["NextRefNo"].ToString();
+        else return nextRefNo;
+    }
+
+
+
+
+    //=========================={ GridView RowDeleting }==========================
+    protected void Grid_RowDeleting(object sender, GridViewDeleteEventArgs e)
+    {
+        GridView gridView = (GridView)sender;
+
+        // item gridview
+        if (gridView.ID == "itemGrid")
+        {
+            int rowIndex = e.RowIndex;
+
+            DataTable dt = ViewState["ItemDetails_VS"] as DataTable;
+
+            if (dt != null && dt.Rows.Count > rowIndex)
+            {
+                // removing record from the gridview
+                dt.Rows.RemoveAt(rowIndex);
+
+                ViewState["ItemDetails_VS"] = dt;
+                Session["ItemDetails"] = dt;
+
+                itemGrid.DataSource = dt;
+                itemGrid.DataBind();
+
+                // re-calculating total amount n assigning back to textbox
+                double? totalBillAmount = dt.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
+                BasicAmount.Text = totalBillAmount.HasValue ? totalBillAmount.Value.ToString("N2") : "0.00";
+
+                Session["TotalBillAmount"] = totalBillAmount;
+
+                // re-calculating taxes
+                //FillTaxHead();
+            }
+        }
+    }
+
+
+
+
+    //=========================={ Custom Validation }==========================
+    protected void ItemExistsCV_ServerValidate(object source, ServerValidateEventArgs args)
+    {
+        string itemName = ItemName.SelectedValue;
+
+        if (Session["ItemDetails"] != null)
+        {
+            DataTable itemDT = (DataTable)Session["ItemDetails"];
+
+            if (itemDT.Rows.Count > 0)
+            {
+                foreach (DataRow row in itemDT.Rows)
+                {
+                    string itemNameDT = row["ItemName"].ToString();
+
+                    if (itemNameDT == itemName)
+                    {
+                        args.IsValid = false;
+                        ItemExistsCV.ErrorMessage = "The selected item already exists";
+                        return;
+                    }
+                }
+            }
+        }
+
+        args.IsValid = true;
     }
 
 
@@ -444,6 +760,11 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
 
     private void insertItemDetails()
     {
+        if (!Page.IsValid)
+        {
+            return;
+        }
+
         string itemCategory = ItemCategory.SelectedValue;
         string itemSubCategory = ItemSubCategory.SelectedValue;
         string itemName = ItemName.SelectedValue;
@@ -480,9 +801,12 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
 
                 // total item basic amount
                 double? totalItemAMount = dt.AsEnumerable().Sum(row => row["ItemSubTotal"] is DBNull ? (double?)null : Convert.ToDouble(row["ItemSubTotal"])) ?? 0.0;
-                //TotalItemAmount.Text = totalItemAMount.HasValue ? totalItemAMount.Value.ToString("N2") : "0.00";
+                BasicAmount.Text = totalItemAMount.HasValue ? totalItemAMount.Value.ToString("N2") : "0.00";
 
                 Session["TotalBillAmount"] = totalItemAMount;
+
+                // recalculating tax head
+                FillTaxHead();
 
                 // clearing input elements
                 ItemCategory.SelectedIndex = 0;
@@ -676,6 +1000,9 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
             ViewState["ItemDetails_VS"] = dt;
             Session["ItemDetails"] = dt;
 
+            // recalculating tax head
+            FillTaxHead();
+
             SheetName.Text = string.Empty;
         }
     }
@@ -800,7 +1127,202 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
 
 
 
+    //=========================={ Tax Head }==========================
+    protected void GridTax_RowDataBound(object sender, GridViewRowEventArgs e)
+    {
+        if (e.Row.RowType == DataControlRowType.DataRow && (e.Row.RowState & DataControlRowState.Edit) > 0)
+        {
+            // Set the row in edit mode
+            e.Row.RowState = e.Row.RowState ^ DataControlRowState.Edit;
+        }
 
+        if (e.Row.RowType == DataControlRowType.DataRow)
+        {
+            // fetching acount head or taxes
+            DataTable accountHeadNewDT = getAccountHeadNew();
+
+            //=================================={ Add/Less column }========================================
+            DropDownList ddlAddLess = (DropDownList)e.Row.FindControl("AddLess");
+
+            if (ddlAddLess != null)
+            {
+                string addLessValue = accountHeadNewDT.Rows[e.Row.RowIndex]["AddLess"].ToString();
+                ddlAddLess.SelectedValue = addLessValue;
+            }
+
+            //=================================={ Percentage/Amount column }========================================
+            DropDownList ddlPerOrAmnt = (DropDownList)e.Row.FindControl("Factor");
+
+            if (ddlPerOrAmnt != null)
+            {
+                string perOrAmntValue = accountHeadNewDT.Rows[e.Row.RowIndex]["Factor"].ToString();
+                ddlPerOrAmnt.SelectedValue = perOrAmntValue;
+            }
+        }
+    }
+
+    private void FillTaxHead()
+    {
+        DataTable accountHeadNewDT = getAccountHeadNew();
+
+        decimal totalBillAmount = Convert.ToDecimal(BasicAmount.Text);
+
+        Session["AccountHeadDT"] = accountHeadNewDT;
+        autoFilltaxHeads(accountHeadNewDT, totalBillAmount);
+    }
+
+    private void autoFilltaxHeads(DataTable accountHeadDT, decimal bscAmnt)
+    {
+        decimal basicAmount = bscAmnt;
+        decimal totalDeduction = 0.00m;
+        decimal totalAddition = 0.00m;
+        decimal netAmount = 0.00m;
+
+        // adding dynamic column
+        if (!accountHeadDT.Columns.Contains("TaxAmount"))
+        {
+            // adding the new column with checkboxes
+            DataColumn checkboxColumn = new DataColumn("TaxAmount", typeof(decimal));
+            accountHeadDT.Columns.Add(checkboxColumn);
+        }
+
+        foreach (DataRow row in accountHeadDT.Rows)
+        {
+            decimal percentage = Convert.ToDecimal(row["Value"]);
+
+            decimal taxValue = (basicAmount * percentage) / 100;
+
+            if (row["AddLess"].ToString() == "Add")
+            {
+                totalAddition = totalAddition + taxValue;
+            }
+            else
+            {
+                totalDeduction = totalDeduction + taxValue;
+            }
+
+            row["TaxAmount"] = taxValue;
+        }
+
+
+        divTaxHead.Visible = true;
+        GridTax.Visible = true;
+
+        if (!accountHeadDT.Columns.Contains("CheckStatus"))
+        {
+            DataColumn CheckStatus = new DataColumn("CheckStatus", typeof(bool));
+            CheckStatus.DefaultValue = true;
+            accountHeadDT.Columns.Add(CheckStatus);
+        }
+
+        GridTax.DataSource = accountHeadDT;
+        GridTax.DataBind();
+
+        // filling total deduction
+        txtTotalDeduct.Text = Math.Abs(totalDeduction).ToString("N2");
+
+        // filling total addition
+        txtTotalAdd.Text = totalAddition.ToString("N2");
+
+        // Net Amount after tax deductions or addition
+        netAmount = (basicAmount + totalAddition) - Math.Abs(totalDeduction);
+        txtNetAmnt.Text = netAmount.ToString("N2");
+    }
+
+    protected void btnReCalTax_Click(object sender, EventArgs e)
+    {
+        RecalculateTaxHead();
+    }
+
+    private void RecalculateTaxHead()
+    {
+        // Account Head DataTable
+        DataTable dt = (DataTable)Session["AccountHeadDT"];
+
+        // Perform calculations or other logic based on the updated values
+        decimal totalBill = Convert.ToDecimal(BasicAmount.Text);
+        decimal totalDeduction = 0.00m;
+        decimal totalAddition = 0.00m;
+        decimal netAmount = 0.00m;
+
+        foreach (GridViewRow row in GridTax.Rows)
+        {
+            // Accessing the updated dropdown values from the grid
+            string updatedAddLessValue = ((DropDownList)row.FindControl("AddLess")).SelectedValue;
+
+            int rowIndex = row.RowIndex;
+
+            // reading parameters from gridview
+            TextBox AcHeadNameTxt = row.FindControl("GLAccountName") as TextBox;
+            TextBox ValueTxt = row.FindControl("Value") as TextBox;
+            DropDownList FactorDD = row.FindControl("Factor") as DropDownList;
+            DropDownList AddLessDropown = row.FindControl("AddLess") as DropDownList;
+            TextBox TaxAccountHeadAmount = row.FindControl("TaxAmount") as TextBox;
+
+            string accountHeadName = (AcHeadNameTxt.Text).ToString();
+            decimal taxValue = Convert.ToDecimal(ValueTxt.Text);
+            string factor = FactorDD.SelectedValue;
+            string addLess = AddLessDropown.SelectedValue;
+            decimal taxAmount = Convert.ToDecimal(TaxAccountHeadAmount.Text);
+
+            bool checkboxStatus = ((CheckBox)row.FindControl("CheckStatus")).Checked;
+
+            if (checkboxStatus)
+            {
+                if (factor == "Amount")
+                {
+                    taxAmount = taxValue;
+
+                    // setting tax head amount
+                    TaxAccountHeadAmount.Text = Math.Abs(taxAmount).ToString("");
+
+                    if (addLess == "Add")
+                    {
+                        totalAddition = totalAddition + taxAmount;
+                    }
+                    else
+                    {
+                        totalDeduction = totalDeduction + taxAmount;
+                    }
+                }
+                else
+                {
+                    // tax amount (based on add or less)
+                    taxAmount = (totalBill * taxValue) / 100;
+
+                    // setting tax head amount
+                    TaxAccountHeadAmount.Text = Math.Abs(taxAmount).ToString("");
+
+                    if (addLess == "Add")
+                    {
+                        totalAddition = totalAddition + taxAmount;
+                    }
+                    else
+                    {
+                        totalDeduction = totalDeduction + taxAmount;
+                    }
+                }
+            }
+        }
+
+        // setting total deduction
+        txtTotalDeduct.Text = Math.Abs(totalDeduction).ToString("N2");
+
+        // setting total addition
+        txtTotalAdd.Text = totalAddition.ToString("N2");
+
+        // Net Amount after tax deductions or addition
+        netAmount = (totalBill + totalAddition) - Math.Abs(totalDeduction);
+        txtNetAmnt.Text = netAmount.ToString("N2");
+    }
+
+
+
+    //=========================={ Checkbox Event }==========================
+    protected void CheckStatus_CheckedChanged(object sender, EventArgs e)
+    {
+        RecalculateTaxHead();
+    }
 
 
 
@@ -818,11 +1340,11 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
     {
         bool someChecked = false;
 
-        foreach (GridViewRow row in itemGrid.Rows)
+        foreach (GridViewRow row in GridTax.Rows)
         {
-            bool checkStatus = ((CheckBox)row.FindControl("CheckStatus")).Checked;
+            bool CheckStatus = ((CheckBox)row.FindControl("CheckStatus")).Checked;
 
-            if (checkStatus)
+            if (CheckStatus)
             {
                 someChecked = true;
             }
@@ -839,12 +1361,20 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
 
                     try
                     {
-                        // inserting header
-                        InsertPOItems(con, transaction);
+                        string poRefNo_New = GetNewPOReferenceNo(con, transaction);
+
+                        // insert po header
+                        InsertPOHeader(con, transaction, poRefNo_New);
+
+                        // inserting po items
+                        InsertPOItems(con, transaction, poRefNo_New);
+
+                        // inserting invoice or tax heads
+                        InsertTaxHead(con, transaction, poRefNo_New);
 
                         if (transaction.Connection != null) transaction.Commit();
 
-                        getSweetAlertSuccessRedirectMandatory("Success!", $"The P.O. BOM Successfully Uploaded", "PurchaseOrderBOM.aspx");
+                        getSweetAlertSuccessRedirectMandatory("Success!", $"The P.O. Successfully Created", "PurchaseOrderBOM.aspx");
                     }
                     catch (Exception ex)
                     {
@@ -865,16 +1395,56 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
         }
         else
         {
-            getSweetHTMLWzrning("No Items Are Checked", "Kindly Check Minimum 1 Item To Proceed Further");
+            getSweetAlertErrorMandatory("No GL Tax Checked", "Kindly Check Some GL Tax Heads To Proceed Further");
         }
     }
 
 
 
 
+    private void InsertPOHeader(SqlConnection con, SqlTransaction transaction, string poRefNo_New)
+    {
+        string userID = Session["UserId"].ToString();
 
+        string tenderEstimateNo = TenderNoNTitle.SelectedValue;
+        string estimateNumber = EstimationNo.Text;
+        DateTime estimateDate = DateTime.Parse(EstimationDate.Text);
 
-    private void InsertPOItems(SqlConnection con, SqlTransaction transaction)
+        string poNumber = PONumber.Text;
+        DateTime poDate = DateTime.Parse(PODate.Text);
+        string venderName = VenderName.SelectedValue;
+        decimal poAmount = Convert.ToDecimal(POAmount.Text);
+        string poRemark = PORemark.Value;
+
+        decimal aoBasicAmount = Convert.ToDecimal(BasicAmount.Text);
+        decimal totalDeduct = decimal.TryParse(txtTotalDeduct.Text, out decimal deductValue) ? deductValue : 0;
+        decimal totalAdd = decimal.TryParse(txtTotalAdd.Text, out decimal addValue) ? addValue : 0;
+        decimal netAmount = decimal.TryParse(txtNetAmnt.Text, out decimal netValue) ? netValue : 0;
+
+        string sql = $@"insert into PoDetails757 
+                        (RefID, PoNo, PoDate, TenTitle, EstimationNo, EstimationDate, VendNme, PoAmt, Remark, BasicAmount, TotalDeduct, TotalAdd, NetAmount, SaveBy) 
+                        values 
+                        (@RefID, @PoNo, @PoDate, @TenTitle, @EstimationNo, @EstimationDate, @VendNme, @PoAmt, @Remark, @BasicAmount, @TotalDeduct, @TotalAdd, @NetAmount, @SaveBy)";
+
+        SqlCommand cmd = new SqlCommand(sql, con, transaction);
+        cmd.Parameters.AddWithValue("@RefID", poRefNo_New);
+        cmd.Parameters.AddWithValue("@PoNo", poNumber);
+        cmd.Parameters.AddWithValue("@PoDate", poDate);
+        cmd.Parameters.AddWithValue("@TenTitle", tenderEstimateNo);
+        cmd.Parameters.AddWithValue("@EstimationNo", estimateNumber);
+        cmd.Parameters.AddWithValue("@EstimationDate", estimateDate);
+        cmd.Parameters.AddWithValue("@VendNme", venderName);
+        cmd.Parameters.AddWithValue("@PoAmt", poAmount);
+        cmd.Parameters.AddWithValue("@Remark", poRemark);
+        cmd.Parameters.AddWithValue("@BasicAmount", aoBasicAmount);
+        cmd.Parameters.AddWithValue("@TotalDeduct", totalDeduct);
+        cmd.Parameters.AddWithValue("@TotalAdd", totalAdd);
+        cmd.Parameters.AddWithValue("@NetAmount", netAmount);
+        cmd.Parameters.AddWithValue("@SaveBy", userID);
+        cmd.ExecuteNonQuery();
+    }
+
+    private void InsertPOItems(SqlConnection con, SqlTransaction transaction, string poRefNo)
     {
         DataTable dt = (DataTable)Session["ItemDetails"];
 
@@ -882,90 +1452,135 @@ public partial class Purchase_Order_PurchaseOrderBOM : System.Web.UI.Page
         {
             string userID = Session["UserId"].ToString();
 
-            // administrative approval (DD) ref no
-            string PoRefNo = PoNo.SelectedValue;
-
             foreach (DataRow row in dt.Rows)
             {
                 int rowIndex = dt.Rows.IndexOf(row);
 
-                CheckBox chkStatus = (CheckBox)itemGrid.Rows[rowIndex].FindControl("CheckStatus");
+                // new item refernennce no
+                string itemRefNo_New = GetPoItemsRefNo(con, transaction);
 
-                // checking if all fields in the row have data
-                if (row.ItemArray.All(field => !string.IsNullOrEmpty(field.ToString())))
+                if (row["DataEntryMode"].ToString().ToUpper().Trim() == "EXCEL".ToUpper().Trim())
                 {
-                    // only checked items will be inserted
-                    if (chkStatus != null && chkStatus.Checked)
-                    {
-                        // new item refernennce no
-                        string itemRefNo_New = GetPoItemsRefNo(con, transaction);
+                    // fetching existing refids for following fields
+                    string itemCategoryId = GetReferenceId_ItemCategory(con, transaction, row["ItemCategory"].ToString());
+                    string itemSubCategoryId = GetReferenceId_ItemSubCategory(con, transaction, row["ItemSubCategory"].ToString(), itemCategoryId);
+                    string itemUomId = GetReferenceId_UOM(con, transaction, row["ItemUOM"].ToString());
+                    string itemId = GetReferenceId_ItemMaster(con, transaction, row["ItemName"].ToString(), itemCategoryId, itemSubCategoryId, itemUomId);
 
-                        if (row["DataEntryMode"].ToString().ToUpper().Trim() == "EXCEL".ToUpper().Trim())
-                        {
-                            // fetching existing refids for following fields
-                            string itemCategoryId = GetReferenceId_ItemCategory(con, transaction, row["ItemCategory"].ToString());
-                            string itemSubCategoryId = GetReferenceId_ItemSubCategory(con, transaction, row["ItemSubCategory"].ToString(), itemCategoryId);
-                            string itemUomId = GetReferenceId_UOM(con, transaction, row["ItemUOM"].ToString());
-                            string itemId = GetReferenceId_ItemMaster(con, transaction, row["ItemName"].ToString(), itemCategoryId, itemSubCategoryId, itemUomId);
-
-                            //excel entry
-                            string sql = $@"insert into PoBom757 
+                    //excel entry
+                    string sql = $@"insert into PoBom757 
                                         (RefNo, PORefNo, ItemCategory, ItemSubCategory, ItemName, PoQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BalanceQty, BillQty, SaveBy) 
                                         values 
                                         (@RefNo, @PORefNo, @ItemCategory, @ItemSubCategory, @ItemName, @PoQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BalanceQty, @BillQty, @SaveBy)";
 
-                            SqlCommand cmd = new SqlCommand(sql, con, transaction);
-                            cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
-                            cmd.Parameters.AddWithValue("@PORefNo", PoRefNo);
-                            cmd.Parameters.AddWithValue("@ItemCategory", itemCategoryId);
-                            cmd.Parameters.AddWithValue("@ItemSubCategory", itemSubCategoryId);
-                            cmd.Parameters.AddWithValue("@ItemName", itemId);
-                            cmd.Parameters.AddWithValue("@PoQuantity", row["PoQuantity"]);
-                            cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
-                            cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
-                            cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
-                            cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
-                            cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
-                            cmd.Parameters.AddWithValue("@BalanceQty", row["PoQuantity"]);
-                            cmd.Parameters.AddWithValue("@BillQty", (0).ToString());
-                            cmd.Parameters.AddWithValue("@SaveBy", userID);
-                            cmd.ExecuteNonQuery();
-                        }
-                        else
-                        {
-                            // manual entry
-                            string sql = $@"insert into PoBom757 
+                    SqlCommand cmd = new SqlCommand(sql, con, transaction);
+                    cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
+                    cmd.Parameters.AddWithValue("@PORefNo", poRefNo);
+                    cmd.Parameters.AddWithValue("@ItemCategory", itemCategoryId);
+                    cmd.Parameters.AddWithValue("@ItemSubCategory", itemSubCategoryId);
+                    cmd.Parameters.AddWithValue("@ItemName", itemId);
+                    cmd.Parameters.AddWithValue("@PoQuantity", row["PoQuantity"]);
+                    cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
+                    cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
+                    cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                    cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
+                    cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
+                    cmd.Parameters.AddWithValue("@BalanceQty", row["PoQuantity"]);
+                    cmd.Parameters.AddWithValue("@BillQty", (0).ToString());
+                    cmd.Parameters.AddWithValue("@SaveBy", userID);
+                    cmd.ExecuteNonQuery();
+                }
+                else
+                {
+                    // manual entry
+                    string sql = $@"insert into PoBom757 
                                         (RefNo, PORefNo, ItemCategory, ItemSubCategory, ItemName, PoQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, BalanceQty, BillQty, SaveBy) 
                                         values 
                                         (@RefNo, @PORefNo, @ItemCategory, @ItemSubCategory, @ItemName, @PoQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @BalanceQty, @BillQty, @SaveBy)";
 
-                            SqlCommand cmd = new SqlCommand(sql, con, transaction);
-                            cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
-                            cmd.Parameters.AddWithValue("@PORefNo", PoRefNo);
-                            cmd.Parameters.AddWithValue("@ItemCategory", row["ItemCategory"]);
-                            cmd.Parameters.AddWithValue("@ItemSubCategory", row["ItemSubCategory"]);
-                            cmd.Parameters.AddWithValue("@ItemName", row["ItemName"]);
-                            cmd.Parameters.AddWithValue("@PoQuantity", row["PoQuantity"]);
-                            cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
-                            cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
-                            cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
-                            cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
-                            cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
-                            cmd.Parameters.AddWithValue("@BalanceQty", row["PoQuantity"]);
-                            cmd.Parameters.AddWithValue("@BillQty", (0).ToString());
-                            cmd.Parameters.AddWithValue("@SaveBy", userID);
-                            cmd.ExecuteNonQuery();
+                    SqlCommand cmd = new SqlCommand(sql, con, transaction);
+                    cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
+                    cmd.Parameters.AddWithValue("@PORefNo", poRefNo);
+                    cmd.Parameters.AddWithValue("@ItemCategory", row["ItemCategory"]);
+                    cmd.Parameters.AddWithValue("@ItemSubCategory", row["ItemSubCategory"]);
+                    cmd.Parameters.AddWithValue("@ItemName", row["ItemName"]);
+                    cmd.Parameters.AddWithValue("@PoQuantity", row["PoQuantity"]);
+                    cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
+                    cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
+                    cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                    cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
+                    cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
+                    cmd.Parameters.AddWithValue("@BalanceQty", row["PoQuantity"]);
+                    cmd.Parameters.AddWithValue("@BillQty", (0).ToString());
+                    cmd.Parameters.AddWithValue("@SaveBy", userID);
+                    cmd.ExecuteNonQuery();
 
-
-                            //SqlDataAdapter ad = new SqlDataAdapter(cmd);
-                            //DataTable dt = new DataTable();
-                            //ad.Fill(dt);
-                        }
-                    }
+                    //SqlDataAdapter ad = new SqlDataAdapter(cmd);
+                    //DataTable dt = new DataTable();
+                    //ad.Fill(dt);
                 }
             }
         }
     }
+
+    private void InsertTaxHead(SqlConnection con, SqlTransaction transaction, string poRefNo_New)
+    {
+        string userID = Session["UserId"].ToString();
+
+        DataTable dt = (DataTable)Session["AccountHeadDT"];
+
+        if (dt != null)
+        {
+            foreach (GridViewRow row in GridTax.Rows)
+            {
+                int rowIndex = row.RowIndex;
+
+                string glAccountCode = dt.Rows[rowIndex]["GLAccountCode"].ToString();
+
+                // Tax Head Grid Details
+                TextBox GLAccountNameTxt = row.FindControl("GLAccountName") as TextBox;
+                string glAccountName = (GLAccountNameTxt.Text).ToString();
+
+                TextBox ValueTXT = row.FindControl("Value") as TextBox;
+                decimal taxValue = Convert.ToDecimal(ValueTXT.Text);
+
+                DropDownList FactorDD = row.FindControl("Factor") as DropDownList;
+                string factor = FactorDD.SelectedValue;
+
+                DropDownList AddLessDropown = row.FindControl("AddLess") as DropDownList;
+                string addLess = AddLessDropown.SelectedValue;
+
+                TextBox TaxAccountHeadAmount = row.FindControl("TaxAmount") as TextBox;
+                decimal taxAmount = Convert.ToDecimal(TaxAccountHeadAmount.Text);
+
+                string CheckStatus = ((CheckBox)row.FindControl("CheckStatus")).Checked.ToString();
+
+
+
+                string newTaxRefNo = GetNewGLTaxRefNo(con, transaction);
+
+                string sql = $@"INSERT INTO PurchaseOrderTax757 
+                                (RefNo, PORefNo, GLAccountName, GLAccountCode, Value, Factor, AddLess, TaxAmount, CheckStatus, SaveBy) 
+                                VALUES 
+                                (@RefNo, @PORefNo, @GLAccountName, @GLAccountCode, @Value, @Factor, @AddLess, @TaxAmount, @CheckStatus, @SaveBy)";
+
+                SqlCommand cmd = new SqlCommand(sql, con, transaction);
+                cmd.Parameters.AddWithValue("@RefNO", newTaxRefNo);
+                cmd.Parameters.AddWithValue("@PORefNo", poRefNo_New);
+                cmd.Parameters.AddWithValue("@GLAccountName", glAccountName);
+                cmd.Parameters.AddWithValue("@GLAccountCode", glAccountCode);
+                cmd.Parameters.AddWithValue("@Value", taxValue);
+                cmd.Parameters.AddWithValue("@Factor", factor);
+                cmd.Parameters.AddWithValue("@AddLess", addLess);
+                cmd.Parameters.AddWithValue("@TaxAmount", taxAmount);
+                cmd.Parameters.AddWithValue("@CheckStatus", CheckStatus);
+                cmd.Parameters.AddWithValue("@SaveBy", userID);
+                cmd.ExecuteNonQuery();
+            }
+        }
+    }
+
+
 
 
 

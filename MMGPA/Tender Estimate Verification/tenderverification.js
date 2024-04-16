@@ -17,8 +17,8 @@ $(document).ready(function () {
         allowClear: false,
     });
 
-    // approval status
-    $('#ApprovalStatus').select2({
+    // verification status
+    $('#VerificationStatus').select2({
         theme: 'classic',
         placeholder: 'Select here.....',
         allowClear: false,
@@ -88,8 +88,8 @@ $(document).ready(function () {
                 allowClear: false,
             });
 
-            // approval status
-            $('#ApprovalStatus').select2({
+            // verification status
+            $('#VerificationStatus').select2({
                 theme: 'classic',
                 placeholder: 'Select here.....',
                 allowClear: false,
