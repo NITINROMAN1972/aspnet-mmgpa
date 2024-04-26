@@ -33,6 +33,9 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
                 // initially manual entry option
                 itemEnterManualDiv.Visible = true;
+
+                ViewState["ItemDetails_VS"] = null;
+                Session["ItemDetails"] = null;
             }
         }
         else
@@ -449,6 +452,8 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
             ItemCode.Text = string.Empty;
             ItemUOM.ClearSelection();
         }
+
+        CVItemExists.Visible = false;
     }
 
     protected void ItemSubCategory_SelectedIndexChanged(object sender, EventArgs e)
@@ -468,6 +473,8 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
             ItemCode.Text = string.Empty;
             ItemUOM.ClearSelection();
         }
+
+        CVItemExists.Visible = false;
     }
 
     protected void ItemName_SelectedIndexChanged(object sender, EventArgs e)
@@ -483,6 +490,8 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
             ItemCode.Text = string.Empty;
             ItemUOM.ClearSelection();
         }
+
+        CVItemExists.Visible = false;
     }
 
     private void BindItemDetails(string itemRefID)
@@ -602,6 +611,31 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
     //=========================={ Item Save Button Click Event }==========================
     protected void btnItemInsert_Click(object sender, EventArgs e)
     {
+        string itemNameText = ItemName.SelectedItem.Text;
+        string itemName = ItemName.SelectedValue;
+
+        if(Session["ItemDetails"] != null)
+        {
+            DataTable itemDT = (DataTable)Session["ItemDetails"];
+
+            if (itemDT.Rows.Count > 0)
+            {
+                foreach (DataRow row in itemDT.Rows)
+                {
+                    string itemNameDT = row["ItemName"].ToString();
+
+                    if (itemNameDT == itemNameText || itemNameDT == itemName)
+                    {
+                        CVItemExists.Visible = true;
+                        ItemExistsCV.Text = "item already exists";
+                        return;
+                    }
+                }
+            }
+        }
+
+
+
         insertItemDetails();
     }
 
@@ -632,14 +666,6 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
             if (dt.Rows.Count > 0)
             {
                 itemDiv.Visible = true;
-
-                if (!dt.Columns.Contains("CheckStatus"))
-                {
-                    // adding the new column with checkboxes
-                    DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
-                    checkboxColumn.DefaultValue = true;
-                    dt.Columns.Add(checkboxColumn);
-                }
 
                 itemGrid.DataSource = dt;
                 itemGrid.DataBind();
@@ -835,14 +861,6 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
         {
             itemDiv.Visible = true;
 
-            if (!dt.Columns.Contains("CheckStatus"))
-            {
-                // adding the new column with checkboxes
-                DataColumn checkboxColumn = new DataColumn("CheckStatus", typeof(bool));
-                checkboxColumn.DefaultValue = false;
-                dt.Columns.Add(checkboxColumn);
-            }
-
             itemGrid.DataSource = dt;
             itemGrid.DataBind();
 
@@ -978,39 +996,6 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
 
 
-    //=========================={ Custom Validation }==========================
-    protected void ItemExistsCV_ServerValidate(object source, ServerValidateEventArgs args)
-    {
-        string itemName = ItemName.SelectedItem.Text;
-
-        if (Session["ItemDetails"] != null)
-        {
-            DataTable itemDT = (DataTable)Session["ItemDetails"];
-
-            if (itemDT.Rows.Count > 0)
-            {
-                foreach (DataRow row in itemDT.Rows)
-                {
-                    string itemNameDT = row["ItemName"].ToString();
-
-                    if (itemNameDT == itemName)
-                    {
-                        args.IsValid = false;
-                        ItemExistsCV.ErrorMessage = "item already exists";
-                        return;
-                    }
-                }
-            }
-        }
-
-        args.IsValid = true;
-    }
-
-
-
-
-
-
     //=========================={ Submit Button Click Event }==========================
     protected void btnBack_Click(object sender, EventArgs e)
     {
@@ -1019,59 +1004,40 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
 
     protected void btnSubmit_Click(object sender, EventArgs e)
     {
-        bool someChecked = false;
-
-        foreach (GridViewRow row in itemGrid.Rows)
+        if (itemGrid.Rows.Count > 0)
         {
-            bool checkStatus = ((CheckBox)row.FindControl("CheckStatus")).Checked;
-
-            if (checkStatus)
+            using (SqlConnection con = new SqlConnection(connectionString))
             {
-                someChecked = true;
-            }
-        }
+                con.Open();
+                SqlTransaction transaction = con.BeginTransaction();
 
-        if (someChecked)
-        {
-            if (itemGrid.Rows.Count > 0)
-            {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                try
                 {
-                    con.Open();
-                    SqlTransaction transaction = con.BeginTransaction();
+                    string adminApproveRefNo = AdminApproveNo.SelectedValue;
 
-                    try
-                    {
-                        string adminApproveRefNo = AdminApproveNo.SelectedValue;
+                    // inserting header
+                    InsertAAItems(con, transaction);
 
-                        // inserting header
-                        InsertAAItems(con, transaction);
+                    if (transaction.Connection != null) transaction.Commit();
 
-                        if (transaction.Connection != null) transaction.Commit();
-
-                        string adminapprovalNo = AdminApproveNo.SelectedItem.Text;
-                        getSweetAlertSuccessRedirectMandatory("Item Uploaded Successfully!", $"The Following Items Successfully Uploaded For Administrative Approval: {adminapprovalNo}", "AAItems.aspx");
-                    }
-                    catch (Exception ex)
-                    {
-                        getSweetAlertErrorMandatory("Oops!", $"{ex.Message}");
-                        transaction.Rollback();
-                    }
-                    finally
-                    {
-                        con.Close();
-                        transaction.Dispose();
-                    }
+                    string adminapprovalNo = AdminApproveNo.SelectedItem.Text;
+                    getSweetAlertSuccessRedirectMandatory("Item Uploaded Successfully!", $"The Following Items Successfully Uploaded For Administrative Approval: {adminapprovalNo}", "AAItems.aspx");
                 }
-            }
-            else
-            {
-                getSweetAlertErrorMandatory("No Items Found!", "Kindly Add / Upload Some Items To Proceed Further");
+                catch (Exception ex)
+                {
+                    getSweetAlertErrorMandatory("Oops!", $"{ex.Message}");
+                    transaction.Rollback();
+                }
+                finally
+                {
+                    con.Close();
+                    transaction.Dispose();
+                }
             }
         }
         else
         {
-            getSweetHTMLWzrning("No Items Are Checked", "Kindly Check Minimum 1 Item To Proceed Further");
+            getSweetAlertErrorMandatory("No Items Found!", "Kindly Add / Upload Some Items To Proceed Further");
         }
     }
 
@@ -1095,82 +1061,76 @@ public partial class AA_Item_AAItems : System.Web.UI.Page
             {
                 int rowIndex = dt.Rows.IndexOf(row);
 
-                CheckBox chkStatus = (CheckBox)itemGrid.Rows[rowIndex].FindControl("CheckStatus");
-
                 // checking if all fields in the row have data
                 if (row.ItemArray.All(field => !string.IsNullOrEmpty(field.ToString())))
                 {
                     
                 }
 
-                // only checked items will be inserted
-                if (chkStatus != null && chkStatus.Checked)
+                // new item refernennce no
+                string itemRefNo_New = GetAAItemsRefNo(con, transaction);
+
+                //if (excelRadio.Checked) // mapping refids from text values
+
+
+                if (row["DataEntryMode"].ToString().ToUpper().Trim() == "EXCEL".ToUpper().Trim())
                 {
-                    // new item refernennce no
-                    string itemRefNo_New = GetAAItemsRefNo(con, transaction);
+                    // fetching existing refids for following fields
+                    string itemCategoryId = GetReferenceId_ItemCategory(con, transaction, row["ItemCategory"].ToString());
+                    string itemSubCategoryId = GetReferenceId_ItemSubCategory(con, transaction, row["ItemSubCategory"].ToString(), itemCategoryId);
+                    string itemUomId = GetReferenceId_UOM(con, transaction, row["ItemUOM"].ToString());
+                    string itemId = GetReferenceId_ItemMaster(con, transaction, row["ItemName"].ToString(), itemCategoryId, itemSubCategoryId, itemUomId);
 
-                    //if (excelRadio.Checked) // mapping refids from text values
-
-
-                    if (row["DataEntryMode"].ToString().ToUpper().Trim() == "EXCEL".ToUpper().Trim())
-                    {
-                        // fetching existing refids for following fields
-                        string itemCategoryId = GetReferenceId_ItemCategory(con, transaction, row["ItemCategory"].ToString());
-                        string itemSubCategoryId = GetReferenceId_ItemSubCategory(con, transaction, row["ItemSubCategory"].ToString(), itemCategoryId);
-                        string itemUomId = GetReferenceId_UOM(con, transaction, row["ItemUOM"].ToString());
-                        string itemId = GetReferenceId_ItemMaster(con, transaction, row["ItemName"].ToString(), itemCategoryId, itemSubCategoryId, itemUomId);
-
-                        //excel entry
-                        string sql = $@"insert into AAItem757 
+                    //excel entry
+                    string sql = $@"insert into AAItem757 
                                         (RefNo, AARefNo, ItemCategory, ItemSubCategory, ItemName, ItemCode, ItemQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, SaveBy) 
                                         values 
                                         (@RefNo, @AARefNo, @ItemCategory, @ItemSubCategory, @ItemName, @ItemCode, @ItemQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @SaveBy)";
 
-                        SqlCommand cmd = new SqlCommand(sql, con, transaction);
-                        cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
-                        cmd.Parameters.AddWithValue("@AARefNo", adminApproveRefNo);
-                        cmd.Parameters.AddWithValue("@ItemCategory", itemCategoryId);
-                        cmd.Parameters.AddWithValue("@ItemSubCategory", itemSubCategoryId);
-                        cmd.Parameters.AddWithValue("@ItemName", itemId);
-                        cmd.Parameters.AddWithValue("@ItemCode", row["ItemCode"]);
-                        cmd.Parameters.AddWithValue("@ItemQuantity", row["ItemQuantity"]);
-                        cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
-                        cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
-                        cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
-                        cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
-                        cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
-                        cmd.Parameters.AddWithValue("@SaveBy", userID);
-                        cmd.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        // manual entry
-                        string sql = $@"insert into AAItem757 
+                    SqlCommand cmd = new SqlCommand(sql, con, transaction);
+                    cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
+                    cmd.Parameters.AddWithValue("@AARefNo", adminApproveRefNo);
+                    cmd.Parameters.AddWithValue("@ItemCategory", itemCategoryId);
+                    cmd.Parameters.AddWithValue("@ItemSubCategory", itemSubCategoryId);
+                    cmd.Parameters.AddWithValue("@ItemName", itemId);
+                    cmd.Parameters.AddWithValue("@ItemCode", row["ItemCode"]);
+                    cmd.Parameters.AddWithValue("@ItemQuantity", row["ItemQuantity"]);
+                    cmd.Parameters.AddWithValue("@ItemUOM", itemUomId);
+                    cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
+                    cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                    cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
+                    cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
+                    cmd.Parameters.AddWithValue("@SaveBy", userID);
+                    cmd.ExecuteNonQuery();
+                }
+                else
+                {
+                    // manual entry
+                    string sql = $@"insert into AAItem757 
                                         (RefNo, AARefNo, ItemCategory, ItemSubCategory, ItemName, ItemCode, ItemQuantity, ItemUOM, ItemRate, ItemSubTotal, ItemDescription, DataEntryMode, SaveBy) 
                                         values 
                                         (@RefNo, @AARefNo, @ItemCategory, @ItemSubCategory, @ItemName, @ItemCode, @ItemQuantity, @ItemUOM, @ItemRate, @ItemSubTotal, @ItemDescription, @DataEntryMode, @SaveBy)";
 
-                        SqlCommand cmd = new SqlCommand(sql, con, transaction);
-                        cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
-                        cmd.Parameters.AddWithValue("@AARefNo", adminApproveRefNo);
-                        cmd.Parameters.AddWithValue("@ItemCategory", row["ItemCategory"]);
-                        cmd.Parameters.AddWithValue("@ItemSubCategory", row["ItemSubCategory"]);
-                        cmd.Parameters.AddWithValue("@ItemName", row["ItemName"]);
-                        cmd.Parameters.AddWithValue("@ItemCode", row["ItemCode"]);
-                        cmd.Parameters.AddWithValue("@ItemQuantity", row["ItemQuantity"]);
-                        cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
-                        cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
-                        cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
-                        cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
-                        cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
-                        cmd.Parameters.AddWithValue("@SaveBy", userID);
-                        cmd.ExecuteNonQuery();
+                    SqlCommand cmd = new SqlCommand(sql, con, transaction);
+                    cmd.Parameters.AddWithValue("@RefNo", itemRefNo_New);
+                    cmd.Parameters.AddWithValue("@AARefNo", adminApproveRefNo);
+                    cmd.Parameters.AddWithValue("@ItemCategory", row["ItemCategory"]);
+                    cmd.Parameters.AddWithValue("@ItemSubCategory", row["ItemSubCategory"]);
+                    cmd.Parameters.AddWithValue("@ItemName", row["ItemName"]);
+                    cmd.Parameters.AddWithValue("@ItemCode", row["ItemCode"]);
+                    cmd.Parameters.AddWithValue("@ItemQuantity", row["ItemQuantity"]);
+                    cmd.Parameters.AddWithValue("@ItemUOM", row["ItemUOM"]);
+                    cmd.Parameters.AddWithValue("@ItemRate", row["ItemRate"]);
+                    cmd.Parameters.AddWithValue("@ItemSubTotal", row["ItemSubTotal"]);
+                    cmd.Parameters.AddWithValue("@ItemDescription", row["ItemDescription"]);
+                    cmd.Parameters.AddWithValue("@DataEntryMode", row["DataEntryMode"]);
+                    cmd.Parameters.AddWithValue("@SaveBy", userID);
+                    cmd.ExecuteNonQuery();
 
 
-                        //SqlDataAdapter ad = new SqlDataAdapter(cmd);
-                        //DataTable dt = new DataTable();
-                        //ad.Fill(dt);
-                    }
+                    //SqlDataAdapter ad = new SqlDataAdapter(cmd);
+                    //DataTable dt = new DataTable();
+                    //ad.Fill(dt);
                 }
             }
         }

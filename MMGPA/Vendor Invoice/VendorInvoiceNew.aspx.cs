@@ -292,6 +292,7 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
     protected void PoNo_SelectedIndexChanged(object sender, EventArgs e)
     {
         string poRefID = PoNo.SelectedValue;
+        Session["PoRefID"] = poRefID;
 
         if (PoNo.SelectedValue != "0")
         {
@@ -305,7 +306,7 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
             AutoFillPOItems(poRefID);
 
             // auto-fill taxs / account head
-            //FillTaxHead();
+            FillTaxHead();
         }
         else
         {
@@ -406,6 +407,16 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
                     dt.Columns.Add(CheckStatus);
                 }
 
+                if (dt.Columns.Contains("ItemSubTotal")) dt.Columns["ItemSubTotal"].ColumnName = "ExistingItemSubTotal";
+
+                if (!dt.Columns.Contains("ItemSubTotal"))
+                {
+                    // adding the new column with checkboxes
+                    DataColumn ItemSubTotal = new DataColumn("ItemSubTotal", typeof(decimal));
+                    ItemSubTotal.DefaultValue = 0.00;
+                    dt.Columns.Add(ItemSubTotal);
+                }
+
                 // setting bill qty to 0
                 foreach (DataRow row in dt.Rows)
                 {
@@ -489,12 +500,14 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
     //=========================={ Fetch Data }==========================
     private DataTable getAccountHeadNew()
     {
+        string poRefID = Session["PoRefID"].ToString();
+
         using (SqlConnection con = new SqlConnection(connectionString))
         {
             con.Open();
-            string sql = "select * from GLAccounts757 where GLGroupName = '1000005' AND IsTaxApplied = '1000001'";
+            string sql = "select * from PurchaseOrderTax757 where PORefNo = @PORefNo AND CheckStatus = 'True'";
             SqlCommand cmd = new SqlCommand(sql, con);
-            //cmd.Parameters.AddWithValue("@WorkOrderRefNo", workOrderRefNo);
+            cmd.Parameters.AddWithValue("@PORefNo", poRefID);
             cmd.ExecuteNonQuery();
 
             SqlDataAdapter ad = new SqlDataAdapter(cmd);
@@ -575,14 +588,12 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
     {
         DataTable itemDT = (DataTable)Session["ItemDetails"];
 
-        decimal basicAmount = 0.00m;
+        decimal basicAmount = 0m;
         bool someChecked = false;
 
         foreach (GridViewRow itemRow in itemGrid.Rows)
         {
             int rowIndex = itemRow.RowIndex;
-
-            decimal poQty = Convert.ToDecimal(itemDT.Rows[rowIndex]["PoQuantity"]);
 
             TextBox BillQtyTxt = itemRow.FindControl("BillQty") as TextBox;
             decimal billQty = Convert.ToDecimal(BillQtyTxt.Text);
@@ -592,7 +603,7 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
 
             decimal rate = Convert.ToDecimal(itemDT.Rows[rowIndex]["ItemRate"]);
 
-            decimal itemSubTotal = Convert.ToDecimal(itemDT.Rows[rowIndex]["ItemSubTotal"]);
+            TextBox ItemSubTotalTxt = itemRow.FindControl("ItemSubTotal") as TextBox;
 
             //string checkboxStatus = ((HtmlInputCheckBox)itemRow.FindControl("CheckStatus")).Checked.ToString();
             bool checkboxStatus = ((CheckBox)itemRow.FindControl("CheckStatus")).Checked;
@@ -604,46 +615,26 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
                 if (balanceQty >= 0)
                 {
                     //BalanceQtyTxt.Text = (balanceQty - billQty).ToString();
+                    ItemSubTotalTxt.Text = basicAmount.ToString();
                 }
                 else
                 {
-                    //BalanceQtyTxt.Text = (poQty - billQty).ToString();
+                    ItemSubTotalTxt.Text = (0).ToString();
                 }
 
                 someChecked = true;
             }
             else
             {
-                BillQtyTxt.Text = (0).ToString();
-                //BalanceQtyTxt.Text = Session["BalanceQty"].ToString();
+                ItemSubTotalTxt.Text = (0).ToString();
             }
         }
 
-        if (someChecked)
-        {
-            Session["TotalBillAmount"] = basicAmount;
+        Session["TotalBillAmount"] = basicAmount;
 
-            if (basicAmount > 0)
-            {
-                BasicPOAmount.Text = basicAmount.ToString("N2");
+        BasicPOAmount.Text = basicAmount.ToString("N2");
 
-                FillTaxHead();
-            }
-        }
-        else
-        {
-            divTaxHead.Visible = false;
-
-            BasicPOAmount.Text = string.Empty;
-            txtTotalDeduct.Text = string.Empty;
-            txtTotalAdd.Text = string.Empty;
-            txtNetAmnt.Text = string.Empty;
-
-            GridTax.DataSource = null;
-            GridTax.DataBind();
-
-            Session["AccountHeadDT"] = null;
-        }
+        FillTaxHead();
     }
 
 
@@ -724,8 +715,7 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
         // adding dynamic column
         if (!accountHeadDT.Columns.Contains("TaxAmount"))
         {
-            // adding the new column with checkboxes
-            DataColumn checkboxColumn = new DataColumn("TaxAmount", typeof(int));
+            DataColumn checkboxColumn = new DataColumn("TaxAmount", typeof(decimal));
             accountHeadDT.Columns.Add(checkboxColumn);
         }
 
@@ -981,6 +971,62 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
 
 
 
+
+
+
+
+
+    //=========================={ Textbox Event }==========================
+    protected void BillQty_TextChanged(object sender, EventArgs e)
+    {
+        decimal basicAmount = 0.00m;
+
+        foreach (GridViewRow itemRow in itemGrid.Rows)
+        {
+            int rowIndex = itemRow.RowIndex;
+
+            TextBox BalanceQtyTxt = itemRow.FindControl("BalanceQty") as TextBox;
+            decimal balanceQty = Convert.ToDecimal(BalanceQtyTxt.Text);
+
+            TextBox BillQtyTxt = itemRow.FindControl("BillQty") as TextBox;
+            decimal billQty = Convert.ToDecimal(BillQtyTxt.Text);
+
+            
+            TextBox ItemSubTotalTxt = itemRow.FindControl("ItemSubTotal") as TextBox;
+
+            if(ItemSubTotalTxt != null)
+            {
+                //string checkboxStatus = ((HtmlInputCheckBox)itemRow.FindControl("CheckStatus")).Checked.ToString();
+                bool checkboxStatus = ((CheckBox)itemRow.FindControl("CheckStatus")).Checked;
+
+                if (checkboxStatus)
+                {
+                    decimal itemSubTotal = (balanceQty * billQty);
+
+                    ItemSubTotalTxt.Text = itemSubTotal.ToString();
+                    basicAmount += itemSubTotal;
+                }
+                else
+                {
+                    ItemSubTotalTxt.Text = (0).ToString();
+                }
+            }
+        }
+
+        BasicPOAmount.Text = basicAmount.ToString();
+
+        Session["TotalBillAmount"] = basicAmount;
+
+        FillTaxHead();
+    }
+
+
+
+
+
+
+
+
     //=========================={ Submit Button Click Event }==========================
 
     protected void btnBack_Click(object sender, EventArgs e)
@@ -1147,7 +1193,6 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
                 string itemName = itemDT.Rows[rowIndex]["ItemName"].ToString();
                 string itemUOM = itemDT.Rows[rowIndex]["ItemUOM"].ToString();
                 string itemRate = itemDT.Rows[rowIndex]["ItemRate"].ToString();
-                string itemSUbTotal = itemDT.Rows[rowIndex]["ItemSubTotal"].ToString();
 
                 decimal poQty = Convert.ToDecimal(itemDT.Rows[rowIndex]["PoQuantity"].ToString());
 
@@ -1156,6 +1201,9 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
 
                 TextBox BalanceQtyTxt = row.FindControl("BalanceQty") as TextBox;
                 decimal balanceQty = Convert.ToDecimal(BalanceQtyTxt.Text);
+
+                TextBox ItemSubTotalTxt = row.FindControl("ItemSubTotal") as TextBox;
+                decimal itemSUbTotal = Convert.ToDecimal(ItemSubTotalTxt.Text);
 
                 decimal netBalanceQty = (balanceQty - billQty);
 
@@ -1194,6 +1242,7 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
         }
     }
 
+    // updating po used quantity
     private void UpdatePoItems(SqlConnection con, SqlTransaction transaction, decimal billQty, decimal netBalanceQty, string poRefNo_Existing)
     {
         string sql = $@"Update PoBom757 SET BalanceQty = @BalanceQty, BillQty = @BillQty WHERE RefNo = @RefNo";
@@ -1204,6 +1253,9 @@ public partial class Bills_And_Dispatch_VendorInvoiceNew : System.Web.UI.Page
         cmd.Parameters.AddWithValue("@RefNo", poRefNo_Existing);
         int k = cmd.ExecuteNonQuery();
     }
+
+
+
 
 
     // insert Gl Tax Heads

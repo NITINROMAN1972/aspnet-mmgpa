@@ -71,50 +71,6 @@
                     <!-- 1st row Starts -->
                     <div class="row mb-2">
 
-                        <!-- Tender No & Title -->
-                        <div class="col-md-12 align-self-end">
-                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                <asp:Literal ID="Literal5" Text="" runat="server">Tender Number & Title <em style="color: red">*</em></asp:Literal>
-                                <div>
-                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator4" ControlToValidate="TenderNoNTitle" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select tender number & title" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
-                                </div>
-                            </div>
-                            <asp:DropDownList ID="TenderNoNTitle" OnSelectedIndexChanged="TenderNoNTitle_SelectedIndexChanged" AutoPostBack="true" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
-                        </div>
-
-                    </div>
-                    <!-- 1st row Ends -->
-
-                    <!-- 1st-MID row Starts -->
-                    <div class="row mb-2">
-
-                        <!-- Estimation No -->
-                        <div class="col-md-6 align-self-end">
-                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                <asp:Literal ID="Literal9" Text="" runat="server">Estimation Number <em style="color: red">*</em></asp:Literal>
-                                <div>
-                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator6" ControlToValidate="EstimationNo" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter estimation no." SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
-                                </div>
-                            </div>
-                            <asp:TextBox runat="server" ID="EstimationNo" type="text" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
-                        </div>
-
-                        <!-- Estimation Date -->
-                        <div class="col-md-6 align-self-end">
-                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                <asp:Literal ID="Literal14" Text="" runat="server">Estimation Date <em style="color: red">*</em></asp:Literal>
-                                <div>
-                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator9" ControlToValidate="EstimationDate" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="select estimate date" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
-                                </div>
-                            </div>
-                            <asp:TextBox runat="server" ID="EstimationDate" type="date" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
-                        </div>
-
-                    </div>
-
-                    <!-- 2nd row Starts -->
-                    <div class="row mb-2">
-
                         <!-- PO No -->
                         <div class="col-md-6 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
@@ -138,9 +94,56 @@
                         </div>
 
                     </div>
+                    <!-- 1st row Ends -->
+
+                    <!-- 2nd row Starts -->
+                    <div class="row mb-2">
+
+                        <!-- Tender No & Title -->
+                        <div class="col-md-12 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal5" Text="" runat="server">Tender Number & Title <em style="color: red">*</em></asp:Literal>
+                                <div>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator4" ControlToValidate="TenderNoNTitle" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select tender number & title" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                </div>
+                            </div>
+                            <asp:DropDownList ID="TenderNoNTitle" OnSelectedIndexChanged="TenderNoNTitle_SelectedIndexChanged" AutoPostBack="true" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                        </div>
+
+                    </div>
                     <!-- 2nd row Ends -->
 
                     <!-- 3rd row Starts -->
+                    <div class="row mb-2">
+
+                        <!-- Estimation No -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal9" Text="" runat="server">Estimation Number <em style="color: red">*</em></asp:Literal>
+                                <div>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator6" ControlToValidate="EstimationNo" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter estimation no." SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                </div>
+                            </div>
+                            <asp:TextBox runat="server" ID="EstimationNo" type="text" ReadOnly="true" CssClass="form-control border border-secondary-subtle bg-body-secondary rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
+                        <!-- Estimation Date -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal14" Text="" runat="server">Estimation Date <em style="color: red">*</em></asp:Literal>
+                                <div>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator9" ControlToValidate="EstimationDate" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="select estimate date" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                </div>
+                            </div>
+                            <asp:TextBox runat="server" ID="EstimationDate" type="date" ReadOnly="true" CssClass="form-control border border-secondary-subtle bg-body-secondary rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
+                    </div>
+                    <!-- 3rd row Ends -->
+
+
+
+                    <!-- 4th row Starts -->
                     <div class="row mb-2">
 
                         <!-- Vender Name -->
@@ -166,9 +169,36 @@
                         </div>
 
                     </div>
-                    <!-- 3rd row Ends -->
+                    <!-- 4th row Ends -->
 
-                    <!-- 4th row Starts -->
+                    <!-- 5th row Starts -->
+                    <div class="row mb-2">
+
+                        <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                            <asp:Literal ID="Literal22" Text="" runat="server">Rate Type<em style="color: red">*</em></asp:Literal>
+                            <div class="fw-normal text-danger">
+                                <asp:Literal ID="CVRateTypeChecked" Text="" runat="server"></asp:Literal>
+                            </div>
+                        </div>
+
+                        <!-- Radio Button - Inclusive Tax -->
+                        <div class="align-content-between text-body-tertiary fw-semibold fs-6 ps-4 pe-3">
+                            <asp:RadioButton ID="RadioInclusiveTax" runat="server" Text="" OnCheckedChanged="Radio_CheckedChanged" AutoPostBack="true" Checked="False" GroupName="rateType" />
+                            <literal>Inclusive Tax</literal>
+                        </div>
+
+
+                        <!-- Radio Button - Exclusive Tax -->
+                        <div class="align-content-between text-body-tertiary fw-semibold fs-6 ps-4 pe-3">
+                            <asp:RadioButton ID="RadioExclusiveTax" runat="server" Text="" OnCheckedChanged="Radio_CheckedChanged" AutoPostBack="true" GroupName="rateType" />
+                            <literal>Exclusive Tax</literal>
+                        </div>
+
+                    </div>
+                    <!-- 5th row Ends -->
+
+
+                    <!-- 6th row Starts -->
                     <div class="row mb-2">
 
                         <!-- PO Remark -->
@@ -180,7 +210,7 @@
                         </div>
 
                     </div>
-                    <!-- 4th row Ends -->
+                    <!-- 6th row Ends -->
 
                 </div>
             </div>
@@ -209,7 +239,7 @@
 
                                     <!-- 1st Row Starts -->
                                     <div class="col-md-12 align-content-between text-body-tertiary fw-semibold fs-6 ps-4 pe-3">
-                                        <asp:RadioButton ID="manualRadio" runat="server" Text="" OnCheckedChanged="manualRadio_CheckedChanged" AutoPostBack="true" GroupName="entryMode" />
+                                        <asp:RadioButton ID="manualRadio" runat="server" Text="" OnCheckedChanged="manualRadio_CheckedChanged" AutoPostBack="true" Checked="true" GroupName="entryMode" />
                                         <literal>Manual Item Entry</literal>
                                     </div>
                                     <!-- 1st Row Ends -->
@@ -223,7 +253,7 @@
 
                                     <!-- 3rd Row Starts -->
                                     <div class="col-md-12 align-content-between text-body-tertiary fw-semibold fs-6 ps-4 pe-3">
-                                        <asp:RadioButton ID="EstimateRadio" runat="server" Text="" OnCheckedChanged="EstimateRadio_CheckedChanged" AutoPostBack="true" Checked="true" GroupName="entryMode" />
+                                        <asp:RadioButton ID="EstimateRadio" runat="server" Text="" OnCheckedChanged="EstimateRadio_CheckedChanged" AutoPostBack="true" GroupName="entryMode" />
                                         <literal>Through Tender</literal>
                                     </div>
                                     <!-- 3rd Row Ends -->
@@ -270,10 +300,8 @@
                                             <div>
                                                 <asp:RequiredFieldValidator ID="RequiredFieldValidator2" ControlToValidate="ItemName" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select item name" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                             </div>
-                                            <div>
-                                                <asp:CustomValidator ID="ItemExistsCV" OnServerValidate="ItemExistsCV_ServerValidate" ValidationGroup="ItemSave"
-                                                    ClientValidationFunction="checkItemExistence" Display="Dynamic" runat="server" CssClass="text-danger">
-                                                </asp:CustomValidator>
+                                            <div id="CVItemExists" runat="server" visible="false" class="fw-semibold text-danger">
+                                                <asp:Literal ID="ItemExistsCV" Text="" runat="server"></asp:Literal>
                                             </div>
                                         </div>
                                         <asp:DropDownList ID="ItemName" OnSelectedIndexChanged="ItemName_SelectedIndexChanged" AutoPostBack="true" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
@@ -361,6 +389,13 @@
 
 
 
+                            <!-- Tender Items UI Starts -->
+                            <div id="TenderDiv" runat="server" visible="false" class="mt-3">
+                            </div>
+                            <!-- Tender Items UI Ends -->
+
+
+
 
 
                             <!-- Excel Upload UI Starts -->
@@ -381,7 +416,7 @@
                                         <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                             <asp:Literal ID="Literal1" Text="" runat="server">Sheet Name<em style="color: red">*</em></asp:Literal>
                                             <div>
-                                                <asp:RequiredFieldValidator ID="rr3" ControlToValidate="SheetName" ValidationGroup="DocumentUpload" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter sheet name" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                                <asp:RequiredFieldValidator ID="rr3" ControlToValidate="SheetName" ValidationGroup="ExcelUpload" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter sheet name" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                             </div>
                                         </div>
                                         <asp:TextBox runat="server" ID="SheetName" type="text" step="any" min="-Infinity" max="Infinity" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
@@ -391,11 +426,11 @@
                                     <div class="col-md-4 align-self-end">
                                         <h6 class="fw-lighter fs-6 text-secondary-subtle">User can upload excel with format .xlsx or .xls</h6>
                                         <div>
-                                            <asp:RequiredFieldValidator ID="rr4" ControlToValidate="fileExcel" ValidationGroup="DocumentUpload" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="choose excel file to upload" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                            <asp:RequiredFieldValidator ID="rr4" ControlToValidate="fileExcel" ValidationGroup="ExcelUpload" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="choose excel file to upload" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                         </div>
                                         <div class="input-group has-validation">
                                             <asp:FileUpload ID="fileExcel" runat="server" CssClass="form-control" aria-describedby="inputGroupPrepend" />
-                                            <asp:Button ID="btnDocUpload" Text="Upload" OnClick="btnDocUpload_Click" ValidationGroup="DocumentUpload" runat="server" AutoPost="true" CssClass="btn btn-custom btn-outline-secondary" />
+                                            <asp:Button ID="btnDocUpload" Text="Upload" OnClick="btnDocUpload_Click" ValidationGroup="ExcelUpload" runat="server" AutoPost="true" CssClass="btn btn-custom btn-outline-secondary" />
                                         </div>
                                     </div>
 
@@ -439,17 +474,41 @@
                                                     <%#Container.DataItemIndex + 1%>
                                                 </span>
                                             </ItemTemplate>
-                                            <ItemStyle CssClass="col-md-1 align-middle" />
+                                            <ItemStyle CssClass="align-middle" Width="30px" />
                                             <ItemStyle Font-Size="15px" />
                                         </asp:TemplateField>
+
                                         <asp:BoundField DataField="ItemCategoryText" HeaderText="Item Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                         <asp:BoundField DataField="ItemSubCategoryText" HeaderText="Item Sub Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
                                         <asp:BoundField DataField="ItemNameText" HeaderText="Item Name" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                        <asp:BoundField DataField="PoQuantity" HeaderText="P.O. Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                        <asp:BoundField DataField="TenderQuantity" HeaderText="Tender Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+
+                                        <asp:TemplateField HeaderText="Balance Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="TenderBalQty" Text='<%# Bind("TenderBalQty") %>' AutoPostBack="false" type="number" runat="server" Enabled="false" CssClass="col-md-12 fw-light border-0 bg-white py-1 px-2"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="P.O. Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-2 align-middle">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="PoQuantity" Text='<%# Bind("PoQuantity") %>' AutoPostBack="true" OnTextChanged="PoQuantity_TextChanged" type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="true" CssClass="col-md-12 fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
+                                                <asp:Label ID="lblPoQuantityError" runat="server" Text="" ForeColor="Red"></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                         <asp:BoundField DataField="ItemUOMText" HeaderText="UOM" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                        <asp:BoundField DataField="ItemRate" HeaderText="Rate" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                        <asp:BoundField DataField="ItemSubTotal" HeaderText="Item Sub Total" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                        <asp:BoundField DataField="ItemDescription" HeaderText="Description" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+
+                                        <asp:TemplateField HeaderText="Item Rate" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="ItemRate" Text='<%# Bind("ItemRate") %>' AutoPostBack="false" type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="false" CssClass="col-md-12 fw-light border-0 bg-white py-1 px-2"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Item Sub Total" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="ItemSubTotal" Text='<%# Bind("ItemSubTotal") %>' AutoPostBack="false" type="number" step="0.01" title="can edit the item sub total" runat="server" Enabled="false" CssClass="col-md-12 fw-light border-0 bg-white py-1 px-2"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="Action" ItemStyle-CssClass="align-middle">
                                             <ItemTemplate>
@@ -457,7 +516,7 @@
                                                     <asp:Image runat="server" ImageUrl="../assests/img/modern-cross-fill.svg" AlternateText="Edit" style="width: 28px; height: 28px;"/>
                                                 </asp:LinkButton>
                                             </ItemTemplate>
-                                            <ItemStyle HorizontalAlign="Center" Width="100px" />
+                                            <ItemStyle HorizontalAlign="Center" CssClass="align-middle" Width="30px" />
                                         </asp:TemplateField>
 
                                     </Columns>
@@ -494,9 +553,16 @@
                                     <HeaderStyle CssClass="align-middle grid-custom fw-light" />
                                     <Columns>
 
+                                        <asp:TemplateField HeaderText="Apply" ItemStyle-CssClass="align-middle">
+                                            <ItemTemplate>
+                                                <asp:CheckBox ID="CheckStatus" OnCheckedChanged="CheckStatus_CheckedChanged" AutoPostBack="true" Checked='<%# Eval("CheckStatus") %>' runat="server" CssClass="" />
+                                            </ItemTemplate>
+                                            <ItemStyle HorizontalAlign="Center" />
+                                        </asp:TemplateField>
+
                                         <asp:TemplateField HeaderText="GL Account Name" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-4 align-middle text-start fw-light">
                                             <ItemTemplate>
-                                                <asp:TextBox ID="GLAccountName" Text='<%# Bind("GLAccountName") %>' runat="server" Enabled="true" CssClass="col-md-9 fw-light bg-white border-0 py-1 px-2"></asp:TextBox>
+                                                <asp:TextBox ID="GLAccountName" Text='<%# Bind("GLAccountName") %>' runat="server" Enabled="false" CssClass="col-md-9 fw-light bg-white border-0 py-1 px-2"></asp:TextBox>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
@@ -528,13 +594,6 @@
                                             <ItemTemplate>
                                                 <asp:TextBox ID="TaxAmount" Text='<%# Bind("TaxAmount") %>' type="number" step="0.01" runat="server" Enabled="false" ReadOnly="false" CssClass="col-md-9 fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
                                             </ItemTemplate>
-                                        </asp:TemplateField>
-
-                                        <asp:TemplateField HeaderText="Select" ItemStyle-CssClass="align-middle">
-                                            <ItemTemplate>
-                                                <asp:CheckBox ID="CheckStatus" OnCheckedChanged="CheckStatus_CheckedChanged" AutoPostBack="true" Checked='<%# Eval("CheckStatus") %>' runat="server" CssClass="" />
-                                            </ItemTemplate>
-                                            <ItemStyle HorizontalAlign="Center" />
                                         </asp:TemplateField>
 
                                     </Columns>
@@ -585,10 +644,137 @@
                             </div>
                             <!-- Tax Grid Ends -->
 
+
+                            <!-- Documents Upload UI Starts -->
+                            <div class="mb-3 mt-5 py-3">
+
+                                <!-- Heading Document -->
+                                <div class="border-top border-bottom border-secondary-subtle py-2 mt-4">
+                                    <div class="fw-normal fs-5 fw-medium text-body-secondary">
+                                        <asp:Literal Text="Add P.O. Related Documents" runat="server"></asp:Literal>
+                                    </div>
+                                </div>
+
+                                <!-- Documents Upload -->
+                                <div id="Div1" runat="server" visible="true" class="row mt-4">
+
+                                    <!-- DD Document Type -->
+                                    <div id="docTypeDiv" runat="server" visible="true" class="col-md-4 align-self-start">
+                                        <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                            <asp:Literal ID="Literal17" Text="" runat="server">Document Type</asp:Literal>
+                                        </div>
+                                        <asp:DropDownList ID="DocType" AutoPostBack="false" runat="server" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                                        <div>
+                                            <asp:RequiredFieldValidator ID="RequiredFieldValidator3" ControlToValidate="DocType" ValidationGroup="DocumentUpload" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select document type" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                        </div>
+                                    </div>
+
+                                    <!-- Document Reference Name -->
+                                    <div id="docRefnameDiv" runat="server" visible="false" class="col-md-3 align-self-start">
+                                        <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                            <asp:Literal ID="Literal21" Text="" runat="server">Document Name<em style="color: red">*</em></asp:Literal>
+                                        </div>
+                                        <asp:TextBox runat="server" ID="DocRefName" type="text" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                                        <div>
+                                            <asp:RequiredFieldValidator ID="rr7" ControlToValidate="DocRefName" ValidationGroup="DocumentUpload" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="please enter document name" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                        </div>
+                                    </div>
+
+                                    <!-- Document Upload -->
+                                    <div class="col-md-6 align-self-start">
+                                        <h6 class="fw-lighter fs-6 text-secondary-subtle">User can add multiple p.o. related Documents !</h6>
+                                        <div class="input-group has-validation">
+                                            <asp:FileUpload ID="fileDoc" runat="server" CssClass="form-control" aria-describedby="inputGroupPrepend" />
+                                            <asp:Button ID="btnDocumentUpload" Text="Add +" OnClick="btnDocumentUpload_Click" ValidationGroup="DocumentUpload" runat="server" AutoPost="true" CssClass="btn btn-custom btn-outline-secondary" />
+                                        </div>
+                                        <div>
+                                            <asp:RequiredFieldValidator ID="rr8" ControlToValidate="fileDoc" ValidationGroup="DocumentUpload" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="(please choose a file to upload)" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6"></div>
+                                </div>
+                                <!-- Documents Upload Ends -->
+
+
+                                <!-- Document Grid Starts -->
+                                <div id="docGrid" class="mt-5" runat="server" visible="false">
+                                    <asp:GridView ShowHeaderWhenEmpty="true" ID="GridDocument" EnableViewState="true" runat="server" AutoGenerateColumns="false" OnRowDeleting="Grid_RowDeleting"
+                                        CssClass="table table-bordered border border-light-subtle text-start mt-3 grid-custom">
+                                        <HeaderStyle CssClass="align-middle fw-light fs-6" />
+                                        <Columns>
+
+                                            <asp:TemplateField ControlStyle-CssClass="col-md-1" HeaderText="Sr.No">
+                                                <ItemTemplate>
+                                                    <asp:HiddenField ID="id" runat="server" Value="id" />
+                                                    <span>
+                                                        <%#Container.DataItemIndex + 1%>
+                                                    </span>
+                                                </ItemTemplate>
+                                            </asp:TemplateField>
+
+                                            <asp:BoundField DataField="DocType" HeaderText="Document Type" ReadOnly="true" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                            <asp:BoundField DataField="DocTypeText" HeaderText="Document Type" ReadOnly="true" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                            <asp:BoundField DataField="DocRefName" HeaderText="Document Name" ReadOnly="true" Visible="false" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                            <asp:BoundField DataField="DocName" HeaderText="File Name" ReadOnly="true" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+
+                                            <asp:TemplateField HeaderText="View Document" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light">
+                                                <ItemTemplate>
+                                                    <asp:HyperLink ID="DocPath" runat="server" Text="View Uploaded Document" NavigateUrl='<%# Eval("DocPath") %>' Target="_blank" CssClass="text-decoration-none"></asp:HyperLink>
+                                                </ItemTemplate>
+                                            </asp:TemplateField>
+
+                                            <asp:TemplateField HeaderText="Actions" ItemStyle-CssClass="align-middle">
+                                                <ItemTemplate>
+                                                    <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete" CommandArgument='<%# Container.DataItemIndex %>'>
+                                                         <asp:Image runat="server" ImageUrl="../assests/img/modern-cross-fill.svg" AlternateText="Edit" style="width: 28px; height: 28px;"/>
+                                                    </asp:LinkButton>
+                                                </ItemTemplate>
+                                                <ItemStyle HorizontalAlign="Center" Width="100px" />
+                                            </asp:TemplateField>
+
+                                        </Columns>
+                                    </asp:GridView>
+                                </div>
+                                <!-- Document Grid Ends -->
+
+
+                            </div>
+                            <!-- Documents Upload UI Ends -->
+
+
+                            <!-- T&C Grid Starts -->
+                            <div id="TnCDiv" runat="server" visible="true">
+
+                                <asp:GridView ShowHeaderWhenEmpty="true" ID="TnCGrid" runat="server" AutoGenerateColumns="false" OnRowDeleting="Grid_RowDeleting"
+                                    CssClass="table table-borderless border-0 grid-custom mt-5 mb-3">
+                                    <HeaderStyle CssClass="align-middle" />
+                                    <Columns>
+
+                                        <asp:TemplateField HeaderText="Accept" ItemStyle-CssClass="align-middle">
+                                            <ItemTemplate>
+                                                <asp:CheckBox ID="ApplyTnC" OnCheckedChanged="ApplyTnC_CheckedChanged" AutoPostBack="true" Checked='<%# Eval("ApplyTnC") %>' runat="server" CssClass="text-center " />
+                                            </ItemTemplate>
+                                            <ItemStyle HorizontalAlign="Center" Width="40px" />
+                                        </asp:TemplateField>
+
+                                        <asp:BoundField DataField="TNCTitle" HeaderText="Terms & Conditions" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-left fw-light " />
+
+                                    </Columns>
+                                </asp:GridView>
+
+                                <div id="TnCLiteralDiv" runat="server" visible="false" class="fw-normal text-danger">
+                                    <asp:Literal ID="TnCLiteral" Text="" runat="server"></asp:Literal>
+                                </div>
+
+                            </div>
+                            <!-- T&C Grid Ends -->
+
+
                         </ContentTemplate>
                         <Triggers>
                             <asp:PostBackTrigger ControlID="btnDocUpload" />
                             <asp:PostBackTrigger ControlID="btnSample" />
+                            <asp:PostBackTrigger ControlID="btnDocumentUpload" />
                         </Triggers>
                     </asp:UpdatePanel>
 

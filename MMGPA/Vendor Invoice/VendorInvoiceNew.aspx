@@ -188,19 +188,22 @@
                                         </asp:TemplateField>
 
                                         <asp:BoundField DataField="ItemUOMText" HeaderText="UOM" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
-                                        <asp:BoundField DataField="ItemRate" HeaderText="Rate/Unit" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
+                                        <asp:BoundField DataField="ItemRate" HeaderText="Rate" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
 
                                         <asp:TemplateField HeaderText="Bill Qty" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-2 align-middle">
                                             <ItemTemplate>
-                                                <asp:TextBox ID="BillQty" Text='<%# Bind("BillQty") %>' type="number" step="any" ReadOnly="false" Enabled="true" title="please enter billing amount" runat="server" CssClass="col-md-12 bg-light fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
+                                                <asp:TextBox ID="BillQty" Text='<%# Bind("BillQty") %>' type="number" step="any" OnTextChanged="BillQty_TextChanged" AutoPostBack="true" ReadOnly="false" Enabled="true" title="please enter billing amount" runat="server" CssClass="col-md-12 bg-light fw-light border border-secondary-subtle shadow-sm rounded-1 py-1 px-2"></asp:TextBox>
                                                 <asp:CustomValidator ID="BillQtyValidator" ControlToValidate="BillQty" OnServerValidate="BillQtyValidator_ServerValidate" runat="server" ErrorMessage="exceeds balance qty" ForeColor="Red" Display="Dynamic" ValidationGroup="finalSubmit"></asp:CustomValidator>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
+                                        <asp:TemplateField HeaderText="Sub Total" ItemStyle-Font-Size="15px" ItemStyle-CssClass="col-md-1 align-middle">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="ItemSubTotal" Text='<%# Bind("ItemSubTotal") %>' type="number" step="any" ReadOnly="true" Enabled="false" title="please enter billing amount" runat="server" CssClass="col-md-12 bg-white fw-light border-0 border-white rounded-1 py-1 px-2"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                         <asp:TemplateField HeaderText="Add" ItemStyle-CssClass="align-middle">
-                                            <%--<HeaderTemplate>
-                                                <asp:CheckBox ID="chkSelectAll" runat="server" Text="Select All" OnCheckedChanged="CheckStatus_CheckedChanged" AutoPostBack="true" onclick="toggleCheckBoxes(this);" CssClass="" />
-                                            </HeaderTemplate>--%>
                                             <ItemTemplate>
                                                 <asp:CheckBox ID="CheckStatus" OnCheckedChanged="CheckStatus_CheckedChanged" AutoPostBack="true" Checked='<%# Eval("CheckStatus") %>' runat="server" CssClass="" />
                                             </ItemTemplate>
@@ -328,7 +331,7 @@
                             <!-- Remark -->
                             <div class="col-md-12 px-0 align-self-end">
                                 <div class="mb-1 fs-6">
-                                    <asp:Literal ID="Literal8" Text="" runat="server">Remark (optional)</asp:Literal>
+                                    <asp:Literal ID="Literal8" Text="" runat="server">Remark</asp:Literal>
                                 </div>
                                 <textarea id="InvoiceRemark" name="w3review" rows="3" cols="50" class="form-control border border-secondary-subtle bg-white rounded-1 fs-6 fw-light py-1 shadow-sm" runat="server"></textarea>
                             </div>
@@ -473,12 +476,24 @@
             function toggleCheckBoxes(chkAll) {
                 var gridView = document.getElementById('<%= itemGrid.ClientID %>');
                 var checkBoxes = gridView.getElementsByTagName('input');
+                var basicAmount = 0;
 
                 for (var i = 0; i < checkBoxes.length; i++) {
                     if (checkBoxes[i].type == 'checkbox') {
                         checkBoxes[i].checked = chkAll.checked;
+
+                        // Calculate the total item sub total if checkbox is checked
+                        if (checkBoxes[i].checked) {
+                            var row = checkBoxes[i].closest('tr');
+                            var textBox = row.querySelector('input[id$="ItemSubTotal"]');
+                            if (textBox) {
+                                basicAmount += parseFloat(textBox.value);
+                            }
+                        }
                     }
                 }
+
+                document.getElementById('<%= BasicPOAmount.ClientID %>').value = basicAmount.toFixed(2);
             }
 
         </script>

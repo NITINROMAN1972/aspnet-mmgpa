@@ -138,7 +138,7 @@
                                                 <%#Container.DataItemIndex + 1%>
                                             </span>
                                         </ItemTemplate>
-                                        <ItemStyle CssClass="col-md-1" />
+                                        <ItemStyle CssClass="align-middle" Width="30px" />
                                     </asp:TemplateField>
                                     <asp:BoundField DataField="AANumber" HeaderText="A.A. No" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
                                     <asp:BoundField DataField="AADate" HeaderText="A.A. Date" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" DataFormatString="{0:dd/MM/yyyy}" />
@@ -147,6 +147,7 @@
                                     <asp:BoundField DataField="SanctionDate" HeaderText="Sanctioned Date" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" DataFormatString="{0:dd/MM/yyyy}" />
                                     <asp:BoundField DataField="BudgetName" HeaderText="Source Of Budget" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
                                     <asp:BoundField DataField="AAItemCount" HeaderText="A.A. Items Count" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
+                                    <asp:BoundField DataField="VerificationStatus" HeaderText="Verification Status" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
 
                                     <asp:TemplateField HeaderText="Update" ItemStyle-CssClass="align-middle">
                                         <ItemTemplate>
@@ -154,7 +155,7 @@
                                                 <asp:Image runat="server" ImageUrl="../assests/img/pencil-square.svg" AlternateText="Edit" style="width: 16px; height: 16px;"/>
                                             </asp:LinkButton>
                                         </ItemTemplate>
-                                        <ItemStyle HorizontalAlign="Center" Width="100px" />
+                                        <ItemStyle HorizontalAlign="Center" CssClass="align-middle" Width="30px" />
                                     </asp:TemplateField>
 
                                 </Columns>
@@ -286,7 +287,7 @@
 
 
                             <!-- Mode Of Entry Starts - Radio Buttons -->
-                            <div class="">
+                            <div id="radioOptionsDiv" runat="server" class="">
                                 <h6>Mode Of Entry <em style="color: red">*</em></h6>
                                 <div class="row">
 
@@ -346,10 +347,8 @@
                                             <div>
                                                 <asp:RequiredFieldValidator ID="RequiredFieldValidator2" ControlToValidate="ItemName" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select item name" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                             </div>
-                                            <div>
-                                                <asp:CustomValidator ID="ItemExistsCV" OnServerValidate="ItemExistsCV_ServerValidate" ValidationGroup="ItemSave"
-                                                    ClientValidationFunction="checkItemExistence" Display="Dynamic" runat="server" CssClass="text-danger">
-                                                </asp:CustomValidator>
+                                            <div id="CVItemExists" runat="server" visible="false" class="fw-semibold text-danger">
+                                                <asp:Literal ID="ItemExistsCV" Text="" runat="server"></asp:Literal>
                                             </div>
                                         </div>
                                         <asp:DropDownList ID="ItemName" OnSelectedIndexChanged="ItemName_SelectedIndexChanged" runat="server" AutoPostBack="true" class="form-control is-invalid" CssClass=""></asp:DropDownList>
@@ -359,9 +358,6 @@
                                     <div class="col-md-3 align-self-end">
                                         <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                             <asp:Literal ID="Literal5" Text="" runat="server">Item Code</asp:Literal>
-                                            <div>
-                                                <asp:RequiredFieldValidator ID="RequiredFieldValidator4" ControlToValidate="ItemCode" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter item code" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
-                                            </div>
                                         </div>
                                         <asp:TextBox ID="ItemCode" runat="server" type="text" steps="0.01" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
                                     </div>
@@ -523,7 +519,7 @@
                                                     <%#Container.DataItemIndex + 1%>
                                                 </span>
                                             </ItemTemplate>
-                                            <ItemStyle CssClass="col-md-1" />
+                                            <ItemStyle CssClass="align-middle" Width="30px" />
                                             <ItemStyle Font-Size="15px" />
                                         </asp:TemplateField>
                                         <asp:BoundField DataField="ItemCategoryText" HeaderText="Item Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
@@ -537,23 +533,13 @@
 
                                         <asp:BoundField DataField="ItemDescription" HeaderText="Description" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
 
-                                        <asp:TemplateField HeaderText="Add" ItemStyle-CssClass="align-middle">
-                                            <HeaderTemplate>
-                                                <asp:CheckBox ID="chkSelectAll" runat="server" Text="Select All" onclick="toggleCheckBoxes(this);" CssClass="" />
-                                            </HeaderTemplate>
-                                            <ItemTemplate>
-                                                <asp:CheckBox ID="CheckStatus" runat="server" AutoPostBack="false" Checked='<%# Eval("CheckStatus") %>' CssClass="" />
-                                            </ItemTemplate>
-                                            <ItemStyle HorizontalAlign="Center" />
-                                        </asp:TemplateField>
-
                                         <asp:TemplateField HeaderText="Action">
                                             <ItemTemplate>
                                                 <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete" CommandArgument='<%# Container.DataItemIndex %>'>
                                                     <asp:Image runat="server" ImageUrl="../assests/img/modern-cross-fill.svg" AlternateText="Edit" style="width: 28px; height: 28px;"/>
                                                 </asp:LinkButton>
                                             </ItemTemplate>
-                                            <ItemStyle HorizontalAlign="Center" Width="100px" />
+                                            <ItemStyle HorizontalAlign="Center"  CssClass="align-middle" Width="30px" />
                                         </asp:TemplateField>
 
                                     </Columns>

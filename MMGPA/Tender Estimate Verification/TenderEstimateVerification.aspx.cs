@@ -368,10 +368,10 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
 
             string sql = $@"SELECT te.EstimateNo, te.EstimateDate, Concat(N'₹ ', (Format(te.BasicAmount, 'N', 'en-IN'))) as BasicAmount, 
                             (select count(*) from TenderBOM757 as tb Where tb.EstimateNo = te.EstimateNo AND tb.DeleteFlag IS NULL) as ItemCount, 
-                            Case When (select count(*) from EstimateVerification757 as est where est.EstimateNo = te.EstimateNo) > 0 
+                            Case When (select count(*) from EstimateVerification757 as est where est.EstimateNo = te.EstimateNo AND est.VerificationStatus = 'TRUE') > 0 
                             Then 'Verified' Else 'Pending' end as EstimateVerified 
                             FROM TenderEstimation757 as te 
-                            left join EstimateVerification757 as est on est.EstimateNo = te.EstimateNo 
+                            left join EstimateVerification757 as est on est.EstimateNo = te.EstimateNo
                             WHERE 1=1";
 
             if (!string.IsNullOrEmpty(estimateNo))
@@ -723,7 +723,7 @@ public partial class Tender_Verification_TenderVerification : System.Web.UI.Page
         }
         else
         {
-            getSweetAlertSuccessRedirectMandatory("Estimate Verification Pending!", $"The Following Items Have Not Been Verified Yet", "TenderVerification.aspx");
+            getSweetAlertSuccessRedirectMandatory("Estimate Verification Pending!", $"The Following Items Have Not Been Verified Yet", "TenderEstimateVerification.aspx");
         }
     }
 

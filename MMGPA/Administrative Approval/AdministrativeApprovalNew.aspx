@@ -65,11 +65,11 @@
                         <asp:Literal Text="AA Details" runat="server"></asp:Literal>
                     </div>
 
-                    <!-- 1st row Starts -->
+                    <!-- 0 row Starts -->
                     <div class="row mb-2">
 
                         <!-- Administrative Approva Title -->
-                        <div class="col-md-8 align-self-end">
+                        <div class="col-md-12 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                 <asp:Literal ID="Literal7" Text="" runat="server">A.A. Title<em style="color: red">*</em></asp:Literal>
                                 <div>
@@ -79,8 +79,25 @@
                             <asp:TextBox runat="server" ID="AATitle" type="text" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
                         </div>
 
+                    </div>
+                    <!-- 0 row Ends -->
+
+                    <!-- 1st row Starts -->
+                    <div class="row mb-2">
+
+                        <!-- AA Code -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal8" Text="" runat="server">A.A. Code<em style="color: red">*</em></asp:Literal>
+                                <div>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator3" ControlToValidate="AACode" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter a.o. code" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                </div>
+                            </div>
+                            <asp:TextBox runat="server" ID="AACode" type="text" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
                         <!-- Bureau -->
-                        <div class="col-md-4 align-self-end">
+                        <div class="col-md-6 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                 <asp:Literal ID="Literal5" Text="" runat="server">Bureau<em style="color: red">*</em></asp:Literal>
                                 <div>
@@ -254,7 +271,7 @@
                                     <asp:TemplateField HeaderText="Actions">
                                         <ItemTemplate>
                                             <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete" CommandArgument='<%# Container.DataItemIndex %>'>
-                                    <asp:Image runat="server" ImageUrl="../assests/img/modern-cross-fill.svg" AlternateText="Edit" style="width: 28px; height: 28px;"/>
+                                                <asp:Image runat="server" ImageUrl="../assests/img/modern-cross-fill.svg" AlternateText="Edit" style="width: 28px; height: 28px;"/>
                                             </asp:LinkButton>
                                         </ItemTemplate>
                                         <ItemStyle HorizontalAlign="Center" Width="100px" />

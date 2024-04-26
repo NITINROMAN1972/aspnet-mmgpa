@@ -303,7 +303,7 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
             DocType.DataTextField = "DocumentName";
             DocType.DataValueField = "RefNo";
             DocType.DataBind();
-            DocType.Items.Insert(0, new ListItem("------Select Document Type------", "0"));
+            DocType.Items.Insert(0, new ListItem("--Select Type--", "0"));
         }
     }
 
@@ -590,6 +590,8 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
         string userID = Session["UserID"].ToString();
 
         string adminapproveNo = AANumber.Text;
+
+        string aaCode = AACode.Text;
         DateTime adminapproveDate = DateTime.Parse(AADate.Text);
         string adminapproveTitle = AATitle.Text;
 
@@ -606,7 +608,7 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
 
         // combining selected category refIDs into comma seperated string
 
-        //AAForItemCategory.Items[0].Selected = false;
+        // AAForItemCategory.Items[0].Selected = false;
 
         List<string> itemCategorylist = new List<string>();
         
@@ -626,6 +628,7 @@ public partial class Administrative_Approval_AdministrativeApprovalNew : System.
         cmd.CommandType = CommandType.StoredProcedure;
 
         cmd.Parameters.AddWithValue("@RefNo", aaRefNo);
+        cmd.Parameters.AddWithValue("@AACode", aaCode);
         cmd.Parameters.AddWithValue("@AANumber", adminapproveNo);
         cmd.Parameters.AddWithValue("@AADate", adminapproveDate);
         cmd.Parameters.AddWithValue("@AATitle", adminapproveTitle);

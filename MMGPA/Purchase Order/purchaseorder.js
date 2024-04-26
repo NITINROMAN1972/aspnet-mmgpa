@@ -50,6 +50,13 @@ $(document).ready(function () {
         allowClear: false,
     });
 
+    // document type
+    $('#DocType').select2({
+        theme: 'classic',
+        placeholder: 'Select here.....',
+        allowClear: false,
+    });
+
 
 
     
@@ -142,6 +149,13 @@ $(document).ready(function () {
 
             // uom
             $('#ItemUOM').select2({
+                theme: 'classic',
+                placeholder: 'Select here.....',
+                allowClear: false,
+            });
+
+            // document type
+            $('#DocType').select2({
                 theme: 'classic',
                 placeholder: 'Select here.....',
                 allowClear: false,

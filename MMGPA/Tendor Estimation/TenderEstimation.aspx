@@ -138,7 +138,7 @@
                                                 <%#Container.DataItemIndex + 1%>
                                             </span>
                                         </ItemTemplate>
-                                        <ItemStyle CssClass="col-md-1" />
+                                        <ItemStyle CssClass="align-middle"  Width="30px" />
                                     </asp:TemplateField>
                                     <asp:BoundField DataField="EstimateNo" HeaderText="Estimation No." ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
                                     <asp:BoundField DataField="EstimateDate" HeaderText="Estimation Date" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" DataFormatString="{0:dd/MM/yyyy}" />
@@ -152,7 +152,7 @@
                                                 <asp:Image runat="server" ImageUrl="../assests/img/pencil-square.svg" AlternateText="Edit" style="width: 16px; height: 16px;"/>
                                             </asp:LinkButton>
                                         </ItemTemplate>
-                                        <ItemStyle HorizontalAlign="Center" Width="100px" />
+                                        <ItemStyle HorizontalAlign="Center" CssClass="align-middle" Width="30px" />
                                     </asp:TemplateField>
                                 </Columns>
                                 <FooterStyle CssClass="" />
@@ -237,7 +237,7 @@
                             </div>
 
                             <!-- Mode Of Entry Starts - Radio Buttons -->
-                            <div class="">
+                            <div id="radioOptionsDiv" runat="server" class="">
                                 <h6>Mode Of Entry <em style="color: red">*</em></h6>
                                 <div class="row">
 
@@ -304,24 +304,18 @@
                                             <div>
                                                 <asp:RequiredFieldValidator ID="RequiredFieldValidator2" ControlToValidate="ItemName" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="0" runat="server" ErrorMessage="select item name" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
                                             </div>
-                                            <div>
-                                                <asp:CustomValidator ID="ItemExistsCV" OnServerValidate="ItemExistsCV_ServerValidate" ValidationGroup="ItemSave"
-                                                    ClientValidationFunction="checkItemExistence" Display="Dynamic" runat="server" CssClass="text-danger">
-                                                </asp:CustomValidator>
+                                            <div id="CVItemExists" runat="server" visible="false" class="fw-semibold text-danger">
+                                                <asp:Literal ID="ItemExistsCV" Text="" runat="server"></asp:Literal>
                                             </div>
                                         </div>
-                                        <asp:DropDownList ID="ItemName" runat="server" AutoPostBack="false" class="form-control is-invalid" CssClass=""></asp:DropDownList>
+                                        <asp:DropDownList ID="ItemName" OnSelectedIndexChanged="ItemName_SelectedIndexChanged" runat="server" AutoPostBack="true" class="form-control is-invalid" CssClass=""></asp:DropDownList>
                                     </div>
 
                                     <!-- Req Balance Qty -->
                                     <div class="col-md-3 align-self-end">
-                                        <div class="mb-1 text-body-tertiary fw-semibold fs-6">
-                                            <asp:Literal ID="Literal5" Text="" runat="server">Required Balance Qty</asp:Literal>
-                                            <div>
-                                                <asp:RequiredFieldValidator ID="RequiredFieldValidator4" ControlToValidate="ReqBalanceQty" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter req balance qty" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
-                                            </div>
+                                        <div class="pb-0 mb-0 col-md-12">
+                                            <asp:Button ID="btnReqBalanceQty" OnClick="btnReqBalanceQty_Click" runat="server" Text="Required Item Qty" data-bs-toggle="modal" data-bs-target="#exampleModal" CssClass="btn btn-primary shadow-sm text-white shadow mb-5 button-position" />
                                         </div>
-                                        <asp:TextBox ID="ReqBalanceQty" runat="server" type="number" steps="0.01" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
                                     </div>
 
                                 </div>
@@ -386,9 +380,6 @@
                                     <div class="col-md-10 align-self-end mb-3">
                                         <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                             <asp:Literal ID="Literal7" Text="" runat="server">Item Description</asp:Literal>
-                                            <div>
-                                                <asp:RequiredFieldValidator ID="RequiredFieldValidator3" ControlToValidate="ItemDescription" ValidationGroup="ItemSave" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter item description" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
-                                            </div>
                                         </div>
                                         <textarea id="ItemDescription" rows="2" cols="50" class="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1" runat="server"></textarea>
                                     </div>
@@ -405,6 +396,26 @@
 
                             </div>
                             <!-- Item Manual UI Ends -->
+
+
+                            <!-- Modal -->
+                            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="exampleModalLabel">Requird Item Quantity</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <asp:Literal ID="ModalLiteral" Text="" runat="server"></asp:Literal>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-primary">Save changes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
 
 
@@ -498,7 +509,7 @@
 
                                 <hr class="border-bottom border-secondary-subtle mt-5 mb-5" />
 
-                                <asp:GridView ShowHeaderWhenEmpty="true" ID="itemGrid" runat="server" AutoGenerateColumns="false"
+                                <asp:GridView ShowHeaderWhenEmpty="true" ID="itemGrid" runat="server" AutoGenerateColumns="false" OnRowDeleting="Grid_RowDeleting"
                                     CssClass="table table-bordered  border border-1 border-dark-subtle text-center grid-custom mb-3">
                                     <HeaderStyle CssClass="align-middle" />
                                     <Columns>
@@ -509,7 +520,7 @@
                                                     <%#Container.DataItemIndex + 1%>
                                                 </span>
                                             </ItemTemplate>
-                                            <ItemStyle CssClass="col-md-1" />
+                                            <ItemStyle CssClass="align-middle" />
                                             <ItemStyle Font-Size="15px" />
                                         </asp:TemplateField>
                                         <asp:BoundField DataField="ItemCategoryText" HeaderText="Item Category" ItemStyle-Font-Size="15px" ItemStyle-CssClass="align-middle text-start fw-light" />
@@ -551,6 +562,16 @@
                                             </ItemTemplate>
                                             <ItemStyle HorizontalAlign="Center" />
                                         </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Action">
+                                            <ItemTemplate>
+                                                <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete" CommandArgument='<%# Container.DataItemIndex %>'>
+                                                    <asp:Image runat="server" ImageUrl="../assests/img/modern-cross-fill.svg" AlternateText="Edit" style="width: 28px; height: 28px;"/>
+                                                </asp:LinkButton>
+                                            </ItemTemplate>
+                                            <ItemStyle HorizontalAlign="Center" CssClass="align-middle" Width="30px" />
+                                        </asp:TemplateField>
+
                                     </Columns>
                                 </asp:GridView>
 
@@ -563,7 +584,7 @@
                                         <asp:Literal ID="Literal10" Text="" runat="server">Basic Amount</asp:Literal>
                                         <div class="input-group">
                                             <span class="input-group-text fs-5 fw-semibold">₹</span>
-                                            <asp:TextBox runat="server" ID="BasicAmount" CssClass="form-control fw-lighter border border-2" ReadOnly="true" placeholder="Total Item Amount"></asp:TextBox>
+                                            <asp:TextBox runat="server" ID="BasicAmount" CssClass="form-control fw-lighter border border-2" ReadOnly="true" placeholder="Basic Item Amount"></asp:TextBox>
                                         </div>
                                     </div>
                                 </div>

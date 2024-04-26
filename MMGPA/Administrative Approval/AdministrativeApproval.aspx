@@ -142,8 +142,9 @@
                                                 <%#Container.DataItemIndex + 1%>
                                             </span>
                                         </ItemTemplate>
-                                        <ItemStyle CssClass="col-md-1" />
+                                        <ItemStyle Width="30px" />
                                     </asp:TemplateField>
+                                    <asp:BoundField DataField="AACode" HeaderText="A.A. Code" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
                                     <asp:BoundField DataField="AANumber" HeaderText="A.A. No" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
                                     <asp:BoundField DataField="AADate" HeaderText="A.A. Date" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" DataFormatString="{0:dd/MM/yyyy}" />
                                     <asp:BoundField DataField="AATitle" HeaderText="A.A. Title" ItemStyle-CssClass="col-xs-3 align-middle text-start fw-light" />
@@ -159,7 +160,7 @@
                                                 <asp:Image runat="server" ImageUrl="../assests/img/pencil-square.svg" AlternateText="Edit" style="width: 16px; height: 16px;"/>
                                             </asp:LinkButton>
                                         </ItemTemplate>
-                                        <ItemStyle HorizontalAlign="Center" Width="100px" />
+                                        <ItemStyle HorizontalAlign="Center" Width="30px" />
                                     </asp:TemplateField>
                                 </Columns>
                                 <FooterStyle CssClass="" />
@@ -197,12 +198,11 @@
                         <asp:Literal Text="A.A. Details" runat="server"></asp:Literal>
                     </div>
 
-
-                    <!-- 1st row Starts -->
+                    <!-- 0 row Starts -->
                     <div class="row mb-2">
 
                         <!-- Administrative Approva Title -->
-                        <div class="col-md-8 align-self-end">
+                        <div class="col-md-12 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                 <asp:Literal ID="Literal7" Text="" runat="server">A.A. Title<em style="color: red">*</em></asp:Literal>
                                 <div>
@@ -212,8 +212,25 @@
                             <asp:TextBox runat="server" ID="AATitle" type="text" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
                         </div>
 
+                    </div>
+                    <!-- 0 row Ends -->
+
+                    <!-- 1st row Starts -->
+                    <div class="row mb-2">
+
+                        <!-- AA Code -->
+                        <div class="col-md-6 align-self-end">
+                            <div class="mb-1 text-body-tertiary fw-semibold fs-6">
+                                <asp:Literal ID="Literal8" Text="" runat="server">A.A. Code<em style="color: red">*</em></asp:Literal>
+                                <div>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator3" ControlToValidate="AACode" ValidationGroup="finalSubmit" CssClass="invalid-feedback" InitialValue="" runat="server" ErrorMessage="enter a.o. code" SetFocusOnError="True" Display="Dynamic" ToolTip="Required"></asp:RequiredFieldValidator>
+                                </div>
+                            </div>
+                            <asp:TextBox runat="server" ID="AACode" type="text" CssClass="form-control border border-secondary-subtle bg-light rounded-1 fs-6 fw-light py-1"></asp:TextBox>
+                        </div>
+
                         <!-- Bureau -->
-                        <div class="col-md-4 align-self-end">
+                        <div class="col-md-6 align-self-end">
                             <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                 <asp:Literal ID="Literal5" Text="" runat="server">Bureau<em style="color: red">*</em></asp:Literal>
                                 <div>
@@ -317,8 +334,8 @@
                         <!-- Documents Upload -->
                         <div id="docDiv" runat="server" visible="true" class="row mt-4">
 
-                            <!-- DD Document Name -->
-                            <div id="docTypeDiv" runat="server" visible="true" class="col-md-3 align-self-start">
+                            <!-- DD Document Type -->
+                            <div id="docTypeDiv" runat="server" visible="true" class="col-md-4 align-self-start">
                                 <div class="mb-1 text-body-tertiary fw-semibold fs-6">
                                     <asp:Literal ID="Literal16" Text="" runat="server">Document Type</asp:Literal>
                                 </div>
@@ -340,7 +357,7 @@
                             </div>
 
                             <!-- Document Upload -->
-                            <div class="col-md-8 align-self-start">
+                            <div class="col-md-6 align-self-start">
                                 <h6 class="fw-lighter fs-6 text-secondary-subtle">User can add administrative approval Documents !</h6>
                                 <div class="input-group has-validation">
                                     <asp:FileUpload ID="fileDoc" runat="server" CssClass="form-control" aria-describedby="inputGroupPrepend" />

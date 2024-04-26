@@ -282,7 +282,7 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
             DocType.DataTextField = "DocumentName";
             DocType.DataValueField = "RefNo";
             DocType.DataBind();
-            DocType.Items.Insert(0, new ListItem("------Select Document Type------", "0"));
+            DocType.Items.Insert(0, new ListItem("--Select Type--", "0"));
         }
     }
 
@@ -463,9 +463,9 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
         {
             connection.Open();
 
-            string sql = $@"select aa.RefNo , aa.AANumber, aa.AADate, aa.AATitle, aa.AAFor, Concat(N'₹ ', Format(aa.SanctionAmount, 'N', 'en-IN')) as SanctionAmount, aa.SanctionDate, aa.SourceOfBudget, budget.BudgetName, 
+            string sql = $@"select aa.RefNo, aa.AACode , aa.AANumber, aa.AADate, aa.AATitle, aa.AAFor, Concat(N'₹ ', Format(aa.SanctionAmount, 'N', 'en-IN')) as SanctionAmount, aa.SanctionDate, aa.SourceOfBudget, budget.BudgetName, 
                             LEN(aa.AAFor) - LEN(REPLACE(aa.AAFor, ',', '')) + 1 AS NumberOfItems, b.Bureau, 
-                            case when (select count (*) from AAVerification757 as verify where verify.AARefNo = aa.RefNo) > 0 then 'Verified' else 'Pending' end as VerificationStatus
+                            case when (select count (*) from AAVerification757 as verify where verify.AARefNo = aa.RefNo AND verify.VerificationStatus = 'TRUE') > 0 then 'Verified' else 'Pending' end as VerificationStatus
                             from AAMaster757 as aa 
                             left join SourceOfBudget757 budget on budget.refid = aa.SourceOfBudget 
                             left join ItemCategory757 as ic on ic.RefId = aa.AAFor
@@ -621,6 +621,8 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
                 Session["HeaderDataTable"] = dt;
 
                 AANumber.Text = dt.Rows[0]["AANumber"].ToString();
+
+                AACode.Text = dt.Rows[0]["AACode"].ToString();
                 AATitle.Text = dt.Rows[0]["AATitle"].ToString();
                 SanctionAmount.Text = dt.Rows[0]["SanctionAmount"].ToString();
 
@@ -981,6 +983,8 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
         string userID = Session["UserID"].ToString();
 
         string adminapproveNo = AANumber.Text;
+
+        string aaCode = AACode.Text;
         DateTime adminapproveDate = DateTime.Parse(AADate.Text);
         string adminapproveTitle = AATitle.Text;
 
@@ -1011,11 +1015,12 @@ public partial class Administrative_Approval_AdministrativeApproval : System.Web
 
         // SQL update query
         string sql = $@"Update AAMaster757 SET 
-                        AANumber=@AANumber, AADate=@AADate, AATitle=@AATitle, AAFor=@AAFor, SanctionAmount=@SanctionAmount, 
+                        AACode=@AACode, AANumber=@AANumber, AADate=@AADate, AATitle=@AATitle, AAFor=@AAFor, SanctionAmount=@SanctionAmount, 
                         SanctionDate=@SanctionDate, SourceOfBudget=@SourceOfBudget, AABureau=@AABureau 
                         WHERE RefNo=@RefNo";
         SqlCommand cmd = new SqlCommand(sql, con, transaction);
 
+        cmd.Parameters.AddWithValue("@AACode", aaCode);
         cmd.Parameters.AddWithValue("@AANumber", adminapproveNo);
         cmd.Parameters.AddWithValue("@AADate", adminapproveDate);
         cmd.Parameters.AddWithValue("@AATitle", adminapproveTitle);
